@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Expositions{% endblock %}
+
+{% block body %}
+    <h1>Liste des Expositions</h1>
+    <ul>
+        {% for exposition in expositions %}
+            <li>{{ exposition.titre }} - {{ exposition.description }}</li>
+        {% endfor %}
+    </ul>
+
+    <button id="fetchExpositions">Charger les expositions</button>
+    <div id="expositions"></div>
+
+    <script>
+        document.getElementById('fetchExpositions').addEventListener('click', function() {
+            fetch('expositions/api')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    let html = '<ul>';
+                    data.forEach(exposition => {
+                        html += `<li><strong>${exposition.titre}</strong>: ${exposition.description}</li>`;
+                    });
+                    html += '</ul>';
+                    document.getElementById('expositions').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error("Erreur lors de la récupération des expositions:", error);
+                    document.getElementById('expositions').innerHTML = `<p style="color: red;">Erreur: Impossible de récupérer les données.</p>`;
+                });
+        });
+    </script>
+{% endblock %}
