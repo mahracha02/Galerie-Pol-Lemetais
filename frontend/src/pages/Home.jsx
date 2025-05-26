@@ -1,9 +1,6 @@
 import React from 'react';
 import {useEffect, useState} from 'react';
-import { FaClock } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -11,6 +8,7 @@ import expoImage from "../assets/photos/expo_paul_amar.jpg";
 import eventImage from "../assets/photos/img1.jpg";
 import catalogImage from "../assets/photos/catalogue_paul_amar.jpeg";
 import galerieImage from "../assets/photos/galerie.png";
+import Actualites from '../components/layout/Actualites';
 
 const Home = () => {
   const [showMap, setShowMap] = React.useState(false);
@@ -139,62 +137,9 @@ const Home = () => {
 
 
       {/* Section Actualités */}
-          <section className="relative py-16 mt-12 px-6 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <h2 className="text-4xl font-bold text-center text-white mb-8">📰 Actualités</h2>
+      <Actualites />
+        
       
-      <Swiper
-        modules={[Navigation, Pagination, Autoplay]}
-        navigation
-        pagination={{ clickable: true }}
-        autoplay={{ delay: 3000 }}
-        spaceBetween={30}
-        slidesPerView={1}
-        breakpoints={{
-          640: { slidesPerView: 1 },
-          768: { slidesPerView: 2 },
-          1024: { slidesPerView: 3 },
-        }}
-        className="relative z-10"
-      >
-        {actualites.map((actualite, index) => (
-          <SwiperSlide key={actualite.id}>
-            <div className="relative bg-white bg-opacity-90 backdrop-blur-md rounded-xl shadow-lg overflow-hidden transform transition duration-500 hover:scale-105 hover:shadow-2xl">
-              {/* Badge "Nouveau" pour les dernières actualités */}
-              {index < 3 && (
-                <div className="absolute top-0 left-0 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-br-lg">
-                  Nouveau
-                </div>
-              )}
-              
-              {/* Image */}
-              <div className="h-56 w-full overflow-hidden">
-                <img
-                  src={actualite.image}
-                  alt={actualite.titre}
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
-                />
-              </div>
-              
-              {/* Contenu */}
-              <div className="p-6">
-                <h3 className="text-2xl font-semibold mb-3 text-gray-900">{actualite.titre}</h3>
-                <p className="text-gray-600">{actualite.description}</p>
-                
-                <div className="flex items-center text-gray-500 text-sm mt-3">
-                  <FaClock className="mr-2 text-red-500" />
-                  <span className="font-medium text-red-700 bold bg-gray-200 px-2 py-1 rounded">{actualite.date}</span>
-                </div>
-
-                
-                <button className="mt-5 w-full px-4 py-2 bg-gradient-to-r from-red-600 to-red-400 text-white font-semibold rounded-lg hover:from-red-700 hover:to-red-500 transition duration-300">
-                  En savoir plus
-                </button>
-              </div>
-            </div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
-    </section>
 
       {/* Section a propos de nous */}
       <section className="relative py-16 px-6 bg-gradient-to-br from-gray-900 via-gray-800 to-black">

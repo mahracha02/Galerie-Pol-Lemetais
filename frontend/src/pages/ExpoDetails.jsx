@@ -69,9 +69,9 @@ const ExpoDetails = () => {
   return (
     <div className="bg-gray-50 relative min-h-screen p-12">
       {/* Header avec image de fond */}
-      <div className="relative w-full h-[28rem] sm:h-[32rem] lg:h-[36rem] overflow-hidden rounded-b-3xl rounded-t-3xl shadow-md  ">
+      <div className="relative w-full h-[28rem] sm:h-[32rem] lg:h-[36rem] overflow-hidden rounded-b-3xl rounded-t-3xl shadow-md">
         <img
-          src={expo.image && expo.image !== '' ? expo.image : '/photos/logo.jpg'}
+          src={expo.image && expo.image !== '' ? expo.image.replace('https://', 'http://') : '/uploads/logo.jpg'}
           alt={expo.titre}
           className="absolute inset-0 w-full h-full object-cover object-center"
           loading="eager"

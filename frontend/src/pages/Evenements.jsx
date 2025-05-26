@@ -30,7 +30,7 @@ const Evenements = () => {
   useEffect(() => {
     const fetchEvenements = async () => {
       try {
-        const response = await fetch("/evenements/api");
+        const response = await fetch("/evenements/api/published");
         if (!response.ok) {
           throw new Error('Erreur lors de la récupération des événements');
         }
@@ -238,28 +238,7 @@ const Evenements = () => {
               </p>
             </div>
             
-            {upcomingEvent && (
-              <div className="flex-shrink-0">
-                <Countdown
-                  date={new Date(upcomingEvent.date_debut)}
-                  renderer={CountdownRenderer}
-                />
-              </div>
-            )}
-            {currentEvent && (
-              <div className="flex-shrink-0">
-                <div className="text-2xl font-bold bg-white text-green-600 rounded-lg px-6 py-2 shadow-md">
-                  EN COURS
-                </div>
-              </div>
-            )}
-            {!upcomingEvent && !currentEvent && (
-              <div className="flex-shrink-0">
-                <div className="text-2xl font-bold bg-white text-gray-600 rounded-lg px-6 py-2 shadow-md">
-                  TERMINÉ
-                </div>
-              </div>
-            )}
+            
           </div>
         </div>
       </motion.div>
@@ -279,16 +258,18 @@ const Evenements = () => {
                   initial={{ x: -100 }}
                   animate={{ x: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="absolute top-4 left-0 bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 flex items-center shadow-md"
+                  className="absolute top-4 left-0 bg-gradient-to-r from-red-600 to-red-500 text-white px-4 py-2 flex items-center shadow-md z-10"
                 >
                   <Star className="mr-2" size={16} /> Prochain événement
                 </motion.div>
-                <img
-                  src={upcomingEvent.image || '/placeholder-event.jpg'}
-                  alt={upcomingEvent.titre}
-                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                  loading="lazy"
-                />
+                <div className="relative w-full h-full">
+                  <img
+                    src={upcomingEvent.image || '/placeholder-event.jpg'}
+                    alt={upcomingEvent.titre}
+                    className="w-full h-full object-contain bg-gray-100"
+                    loading="lazy"
+                  />
+                </div>
               </div>
             </div>
             <div className="md:w-1/2 p-8 flex flex-col">
@@ -403,11 +384,11 @@ const Evenements = () => {
                 whileHover={{ y: -5 }}
               >
                 {/* Contenu de la carte d'événement */}
-                <div className={viewMode === 'grid' ? "h-56 bg-gray-200" : "w-1/3 h-48 bg-gray-200"}>
+                <div className={viewMode === 'grid' ? "relative h-64 bg-gray-100" : "relative w-1/3 h-48 bg-gray-100"}>
                   <img
                     src={event.image || '/logo.jpg'}
                     alt={event.titre}
-                    className="w-full h-full object-container"
+                    className="w-full h-full object-contain"
                     loading="lazy"
                   />
                 </div>
@@ -431,12 +412,13 @@ const Evenements = () => {
                         `https://${event.site_url}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      className="group"
                     >
                       <motion.button
-                        className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg flex items-center text-sm"
+                        className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg flex items-center text-sm transition-all duration-300"
                         whileHover={{ x: 5 }}
                       >
-                        Détails <ChevronRight className="ml-1" size={16} />
+                        Détails <ChevronRight className="ml-1 group-hover:translate-x-1 transition-transform duration-300" size={16} />
                       </motion.button>
                     </a>
                   </div>
