@@ -72,7 +72,7 @@ const DetailsArtiste = () => {
         {/* Photo de l'artiste */}
         <div className="w-48 h-48 md:w-64 md:h-64 mb-6 md:mb-0">
           <img
-            src={artiste.photo || '/photos/default-artist.jpg'}
+            src={artiste.photo ? artiste.photo.replace('https://', 'http://') : '/uploads/default-artist.jpg'}
             alt={artiste.nom}
             className="w-full h-full object-cover rounded-full shadow-2xl border-4 border-indigo-500"
           />
