@@ -4,7 +4,7 @@ import { FaFacebookF, FaInstagram } from 'react-icons/fa';
 
 const Footer = () => {
   return (
-    <footer className="relative bg-gray-900 text-white py-12">
+    <footer className="relative bg-gray-900 text-white py-12 mt-auto">
       {/* Effets artistiques en arrière-plan */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-0 left-1/4 w-80 h-80 bg-purple-600 opacity-30 rounded-full blur-3xl"></div>

@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
+import { useGoogleTranslateScript, changeLanguage } from "../../hooks/useGoogleTranslate";
 import logo from "../../assets/photos/logo.jpg";
 
 const Navbar = () => {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [language, setLanguage] = useState("fr"); // Langue par défaut est le français
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
+
+  // Initialiser Google Translate
+  useGoogleTranslateScript();
 
   const navLinks = [
     { path: "/", label: "Accueil" },
@@ -19,38 +22,9 @@ const Navbar = () => {
     { path: "/shop", label: "Boutique" },
   ];
 
-  useEffect(() => {
-    // Ajouter le script de Google Translate si nécessaire
-    if (typeof window.google === "undefined") {
-      const script = document.createElement("script");
-      script.src =
-        "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-      script.async = true;
-      document.body.appendChild(script);
-    }
-
-    window.googleTranslateElementInit = () => {
-      new window.google.translate.TranslateElement(
-        {
-          pageLanguage: "fr",
-          includedLanguages: "en,fr", // Langues supportées
-          autoDisplay: false,
-        },
-        "google_translate_element"
-      );
-    };
-  }, []);
-
-  const toggleLanguage = (lang) => {
-    setLanguage(lang);
+  const handleLanguageChange = (lang) => {
+    changeLanguage(lang);
     setLanguageDropdownOpen(false);
-
-    // Changer la langue de Google Translate
-    const translateCombo = document.querySelector(".goog-te-combo");
-    if (translateCombo) {
-      translateCombo.value = lang;
-      translateCombo.dispatchEvent(new Event("change"));
-    }
   };
 
   return (
@@ -87,8 +61,8 @@ const Navbar = () => {
                 onClick={() => setLanguageDropdownOpen((prev) => !prev)}
                 className="flex items-center px-3 py-2 border rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
               >
-                <span className="mr-2">{language === "fr" ? "🇫🇷" : "🇬🇧"}</span>
-                {language.toUpperCase()}
+                <span className="mr-2">🌐</span>
+                Langue
                 <ChevronDown className="ml-2 h-4 w-4" />
               </button>
 
@@ -96,16 +70,34 @@ const Navbar = () => {
               {languageDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-32 bg-white border rounded-md shadow-lg z-50">
                   <button
-                    onClick={() => toggleLanguage("fr")}
+                    onClick={() => handleLanguageChange("fr")}
                     className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
                   >
                     🇫🇷 Français
                   </button>
                   <button
-                    onClick={() => toggleLanguage("en")}
+                    onClick={() => handleLanguageChange("en")}
                     className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
                   >
                     🇬🇧 English
+                  </button>
+                  <button
+                    onClick={() => handleLanguageChange("es")}
+                    className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
+                  >
+                    🇪🇸 Español
+                  </button>
+                  <button
+                    onClick={() => handleLanguageChange("de")}
+                    className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
+                  >
+                    🇩🇪 Deutsch
+                  </button>
+                  <button
+                    onClick={() => handleLanguageChange("it")}
+                    className="flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100"
+                  >
+                    🇮🇹 Italiano
                   </button>
                 </div>
               )}
@@ -146,11 +138,20 @@ const Navbar = () => {
               ))}
               {/* Button Langue */}
               <div className="flex items-center space-x-2">
-                <button onClick={() => toggleLanguage("fr")} className="text-sm">
+                <button onClick={() => handleLanguageChange("fr")} className="text-sm">
                   🇫🇷
                 </button>
-                <button onClick={() => toggleLanguage("en")} className="text-sm">
+                <button onClick={() => handleLanguageChange("en")} className="text-sm">
                   🇬🇧
+                </button>
+                <button onClick={() => handleLanguageChange("es")} className="text-sm">
+                  🇪🇸
+                </button>
+                <button onClick={() => handleLanguageChange("de")} className="text-sm">
+                  🇩🇪
+                </button>
+                <button onClick={() => handleLanguageChange("it")} className="text-sm">
+                  🇮🇹
                 </button>
               </div>
             </div>

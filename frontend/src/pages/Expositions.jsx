@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ListBulletIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import expo100taur from '../assets/photos/expo100TAUR.jpg';
 import expoBruno from '../assets/photos/expoBruno.jpg';
 import expoPaulAmar from '../assets/photos/expo_paul_amar.jpg';
@@ -12,6 +12,7 @@ const Expositions = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [selectedExpo, setSelectedExpo] = useState(null);
   const [filterDate, setFilterDate] = useState('all');
+  const navigate = useNavigate();
 
   // Animation variants
   const containerVariants = {
@@ -41,7 +42,7 @@ const Expositions = () => {
   };
 
   useEffect(() => {
-    fetch(" /expositions/api", {
+    fetch("/expositions/api/published", {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
@@ -58,13 +59,45 @@ const Expositions = () => {
     setSelectedExpo(selectedExpo === id ? null : id);
   };
 
-  // Filtrer les expositions par date
+  const mois = {
+    janvier: '01',
+    février: '02',
+    fevrier: '02',
+    mars: '03',
+    avril: '04',
+    mai: '05',
+    juin: '06',
+    juillet: '07',
+    août: '08',
+    aout: '08',
+    septembre: '09',
+    octobre: '10',
+    novembre: '11',
+    décembre: '12',
+    decembre: '12',
+  };
+  
+  const parseDateFr = (dateStr) => {
+    const parts = dateStr.toLowerCase().split(' ');
+    if (parts.length !== 3) return null;
+    const jour = parts[0].padStart(2, '0');
+    const moisNum = mois[parts[1]];
+    const annee = parts[2];
+    if (!moisNum) return null;
+    return new Date(`${annee}-${moisNum}-${jour}T00:00:00`);
+  };
+   
   const filteredExpositions = expositions.filter(expo => {
     if (filterDate === 'all') return true;
+  
     const currentDate = new Date();
-    const startDate = new Date(expo.date_debut);
-    const endDate = new Date(expo.date_fin);
-    
+    currentDate.setHours(0, 0, 0, 0);
+  
+    const startDate = parseDateFr(expo.date_debut);
+    const endDate = parseDateFr(expo.date_fin);
+  
+    if (!startDate || !endDate) return false;
+  
     if (filterDate === 'current') {
       return currentDate >= startDate && currentDate <= endDate;
     } else if (filterDate === 'upcoming') {
@@ -72,8 +105,18 @@ const Expositions = () => {
     } else if (filterDate === 'past') {
       return currentDate > endDate;
     }
+  
     return true;
   });
+  
+
+  const scrollToExpositions = (e) => {
+    e.preventDefault();
+    const expositionsSection = document.getElementById('expositions');
+    if (expositionsSection) {
+      expositionsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   if (loading) {
     return (
@@ -141,9 +184,13 @@ const Expositions = () => {
                   </div>
                 </div>
 
-                <a href="#expositions" className="inline-block rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-center font-medium text-white hover:bg-indigo-700">
+                <Link 
+                  to="#expositions" 
+                  onClick={scrollToExpositions}
+                  className="inline-block rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-center font-medium text-white hover:bg-indigo-700"
+                >
                   Voir toutes les expositions
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -218,27 +265,40 @@ const Expositions = () => {
             {viewMode === 'grid' ? (
               // Vue Cartes (Grid)
               <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-              >
-                {filteredExpositions.map((expo) => (
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {filteredExpositions.map((expo) => (
+                <Link 
+                  key={expo.id}
+                  to={`/expositions/${expo.id}`}
+                  className="block" // Important for proper link behavior
+                >
                   <motion.div
-                    key={expo.id}
-                    className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300"
+                    className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer"
                     variants={itemVariants}
-                    whileHover={{ y: -5 }}
+                    whileHover={{ 
+                      y: -5,
+                      scale: 1.03 
+                    }}
+                    style={{ height: "100%" }} // Ensures all cards have same height
                   >
                     <div className="relative h-64 overflow-hidden">
                       <motion.img
                         src={expo.image}
                         alt={expo.titre}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain bg-gray-100"
                         whileHover={{ scale: 1.1 }}
                         transition={{ duration: 0.5 }}
+                        style={{
+                          objectPosition: 'center',
+                          objectFit: 'contain',
+                          padding: '0.5rem'
+                        }}
                       />
-                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
                       <div className="absolute bottom-0 left-0 p-4 text-white">
                         <span className="inline-block px-3 py-1 text-xs font-semibold bg-indigo-600 rounded-full mb-2">
                           {expo.artiste}
@@ -252,103 +312,75 @@ const Expositions = () => {
                         <span className="text-sm font-medium text-indigo-600">
                           {expo.date_debut} - {expo.date_fin}
                         </span>
-                        <motion.button
-                          onClick={() => expandExpo(expo.id)}
-                          className="px-3 py-1 text-sm font-medium text-indigo-600 border border-indigo-200 rounded-full hover:bg-indigo-50"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          {selectedExpo === expo.id ? 'Moins' : 'Plus'}
-                        </motion.button>
                       </div>
                       
-                      <AnimatePresence>
-                        {selectedExpo === expo.id && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="mt-4 overflow-hidden"
-                          >
-                            
-                            <div className="flex flex-wrap gap-2 mb-4">
-                              {expo.tags?.map((tag, index) => (
-                                <span key={index} className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                                  #{tag}
-                                </span>
-                              ))}
-                            </div>
+                      {/* Always visible artist section */}
+                      <div className="mt-4">
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {expo.tags?.map((tag, index) => (
+                            <span key={index} className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+            
+                        {/* Artistes associés */}
+                        <div className="mb-4">
+                          <h4 className="text-lg font-semibold mb-2 text-indigo-700">Artistes participants</h4>
+                          <div className="flex flex-wrap gap-4">
+                            {/* Afficher l'artiste principal avec un badge */}
+                            {expo.artiste_principal && (
+                              <motion.div
+                                key={expo.artiste_principal.id}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="w-32 p-2 rounded-xl shadow-md bg-white text-center hover:bg-indigo-50 transition-colors"
+                              >
+                                <Link to={`/artistes/${expo.artiste_principal.id}`}>
+                                  <div className="relative w-20 h-20 mx-auto mb-2 group">
+                                    <img
+                                      src={expo.artiste_principal.photo || 'photos/logo.jpg'}
+                                      alt={expo.artiste_principal.nom}
+                                      className="w-full h-full object-cover rounded-full border-3 border-indigo-500 shadow-md group-hover:shadow-indigo-400 transition-shadow duration-300"
+                                    />
+                                    <div className="absolute inset-0 rounded-full bg-indigo-500 opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
+                                    {/* Badge unique pour l'artiste principal */}
+                                    <span className="absolute top-0 right-0 bg-indigo-600 text-white text-xs rounded-full py-1 px-2">Principal</span>
+                                  </div>
+                                  <p className="text-sm font-semibold text-gray-800">{expo.artiste_principal.nom}</p>
+                                </Link>
+                              </motion.div>
+                            )}
 
-                            
-                            {/* Artistes associés */}
-                            <div className="mb-4">
-                              <h4 className="text-lg font-semibold mb-2 text-indigo-700">Artistes participants</h4>
-                              <div className="flex flex-wrap gap-4">
-                                {/* Afficher l'artiste principal avec un badge */}
-                                {expo.artiste_principal && (
-                                  <motion.a
-                                    key={expo.artiste_principal.id}
-                                    href={`/artistes/${expo.artiste_principal.id}`}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="w-32 p-2 rounded-xl shadow-md bg-white text-center hover:bg-indigo-50 transition-colors"
-                                  >
-                                    <div className="relative w-20 h-20 mx-auto mb-2 group">
-                                      <img
-                                        src={expo.artiste_principal.photo || 'photos/logo.jpg'}
-                                        alt={expo.artiste_principal.nom}
-                                        className="w-full h-full object-cover rounded-full border-3 border-indigo-500 shadow-md group-hover:shadow-indigo-400 transition-shadow duration-300"
-                                      />
-                                      <div className="absolute inset-0 rounded-full bg-indigo-500 opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
-                                      {/* Badge unique pour l'artiste principal */}
-                                      <span className="absolute top-0 right-0 bg-indigo-600 text-white text-xs rounded-full py-1 px-2">Principal</span>
-                                    </div>
-                                    <p className="text-sm font-semibold text-gray-800">{expo.artiste_principal.nom}</p>
-                                  </motion.a>
-                                )}
-
-                                {/* Afficher les autres artistes */}
-                                {expo.artistes && expo.artistes.length > 0 && expo.artistes.map((artiste) => (
-                                  <motion.a
-                                    key={artiste.id}
-                                    href={`/artistes/${artiste.id}`}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="w-32 p-2 rounded-xl shadow-md bg-white text-center hover:bg-indigo-50 transition-colors"
-                                  >
-                                    <div className="relative w-20 h-20 mx-auto mb-2">
-                                      <img
-                                        src={artiste.photo}
-                                        alt={artiste.nom}
-                                        className="w-full h-full object-cover rounded-full border-3 border-indigo-500 shadow-md hover:shadow-indigo-300 transition-shadow duration-300"
-                                      />
-                                      <div className="absolute inset-0 rounded-full bg-black/10 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                                    </div>
-                                    <p className="text-sm font-semibold text-gray-800">{artiste.nom}</p>
-                                  </motion.a>
-                                ))}
-                              </div>
-                            </div>
-
-
-
-
-                            <Link
-                              key={expo.id}
-                              to={`/expositions/${expo.id}`}
-                              className="inline-block w-full text-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-                            >
-                              Voir les détails
-                            </Link>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
+                            {/* Afficher les autres artistes */}
+                            {expo.artistes && expo.artistes.length > 0 && expo.artistes.map((artiste) => (
+                              <motion.div
+                                key={artiste.id}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="w-32 p-2 rounded-xl shadow-md bg-white text-center hover:bg-indigo-50 transition-colors"
+                              >
+                                <Link to={`/artistes/${artiste.id}`}>
+                                  <div className="relative w-20 h-20 mx-auto mb-2">
+                                    <img
+                                      src={artiste.photo}
+                                      alt={artiste.nom}
+                                      className="w-full h-full object-cover rounded-full border-3 border-indigo-500 shadow-md hover:shadow-indigo-300 transition-shadow duration-300"
+                                    />
+                                    <div className="absolute inset-0 rounded-full bg-black/10 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+                                  </div>
+                                  <p className="text-sm font-semibold text-gray-800">{artiste.nom}</p>
+                                </Link>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
-                ))}
-              </motion.div>
+                </Link>
+              ))}
+            </motion.div>
             ) : (
               // Vue Liste
               <motion.div
@@ -368,9 +400,14 @@ const Expositions = () => {
                         <motion.img
                           src={expo.image}
                           alt={expo.titre}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain bg-gray-100"
                           whileHover={{ scale: 1.05 }}
                           transition={{ duration: 0.5 }}
+                          style={{
+                            objectPosition: 'center',
+                            objectFit: 'contain',
+                            padding: '0.5rem'
+                          }}
                         />
                       </div>
                       <div className="w-full md:w-2/3 p-6 md:p-8">
@@ -400,14 +437,14 @@ const Expositions = () => {
                               </span>
                             </div>
                             
-                            <motion.a
-                              href={`/expositions/${expo.id}`}
-                              className="inline-block px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                            <Link
+                              key={expo.id}
+                              to={`/expositions/${expo.id}`}
+                              className="inline-block w-full text-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors w-1/2 md:w-auto"
                               whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
                             >
                               Voir les détails
-                            </motion.a>
+                            </Link>
                           </div>
 
                           {/* Artistes associés */}
@@ -418,45 +455,47 @@ const Expositions = () => {
                                 
                                 {/* Artiste principal */}
                                 {expo.artiste_principal && (
-                                  <motion.a
+                                  <motion.div
                                     key={expo.artiste_principal.id}
-                                    href={`/artistes/${expo.artiste_principal.id}`}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     className="w-32 p-2 rounded-xl shadow-md bg-white text-center hover:bg-indigo-50 transition-colors"
                                   >
-                                    <div className="relative w-20 h-20 mx-auto mb-2 group">
-                                      <img
-                                        src={expo.artiste_principal.photo || 'photos/logo.jpg'}
-                                        alt={expo.artiste_principal.nom}
-                                        className="w-full h-full object-cover rounded-full border-4 border-indigo-500 shadow-md group-hover:shadow-indigo-400 transition-shadow duration-300"
-                                      />
-                                      <div className="absolute inset-0 rounded-full bg-indigo-500 opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
-                                      <span className="absolute top-0 right-0 bg-indigo-600 text-white text-xs rounded-full py-1 px-2">Principal</span>
-                                    </div>
-                                    <p className="text-sm font-semibold text-gray-800">{expo.artiste_principal.nom}</p>
-                                  </motion.a>
+                                    <Link to={`/artistes/${expo.artiste_principal.id}`}>
+                                      <div className="relative w-20 h-20 mx-auto mb-2 group">
+                                        <img
+                                          src={expo.artiste_principal.photo || 'photos/logo.jpg'}
+                                          alt={expo.artiste_principal.nom}
+                                          className="w-full h-full object-cover rounded-full border-4 border-indigo-500 shadow-md group-hover:shadow-indigo-400 transition-shadow duration-300"
+                                        />
+                                        <div className="absolute inset-0 rounded-full bg-indigo-500 opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
+                                        <span className="absolute top-0 right-0 bg-indigo-600 text-white text-xs rounded-full py-1 px-2">Principal</span>
+                                      </div>
+                                      <p className="text-sm font-semibold text-gray-800">{expo.artiste_principal.nom}</p>
+                                    </Link>
+                                  </motion.div>
                                 )}
 
                                 {/* Autres artistes */}
                                 {expo.artistes?.map((artiste) => (
-                                  <motion.a
+                                  <motion.div
                                     key={artiste.id}
-                                    href={`/artistes/${artiste.id}`}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     className="w-32 p-2 rounded-xl shadow-md bg-white text-center hover:bg-indigo-50 transition-colors"
                                   >
-                                    <div className="relative w-20 h-20 mx-auto mb-2 group">
-                                      <img
-                                        src={artiste.photo}
-                                        alt={artiste.nom}
-                                        className="w-full h-full object-cover rounded-full border-3 border-gray-300 shadow-md group-hover:shadow-gray-400 transition-shadow duration-300"
-                                      />
-                                      <div className="absolute inset-0 rounded-full bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    </div>
-                                    <p className="text-sm font-semibold text-gray-800">{artiste.nom}</p>
-                                  </motion.a>
+                                    <Link to={`/artistes/${artiste.id}`}>
+                                      <div className="relative w-20 h-20 mx-auto mb-2 group">
+                                        <img
+                                          src={artiste.photo}
+                                          alt={artiste.nom}
+                                          className="w-full h-full object-cover rounded-full border-3 border-gray-300 shadow-md group-hover:shadow-gray-400 transition-shadow duration-300"
+                                        />
+                                        <div className="absolute inset-0 rounded-full bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                      </div>
+                                      <p className="text-sm font-semibold text-gray-800">{artiste.nom}</p>
+                                    </Link>
+                                  </motion.div>
                                 ))}
                               </div>
                             </div>
