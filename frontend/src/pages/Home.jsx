@@ -1,9 +1,13 @@
 import React from 'react';
 import {useEffect, useState} from 'react';
 import { motion } from "framer-motion";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
+import { Link } from 'react-router-dom';
+// Import Swiper components and styles
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 import expoImage from "../assets/photos/expo_paul_amar.jpg";
 import eventImage from "../assets/photos/img1.jpg";
 import catalogImage from "../assets/photos/catalogue_paul_amar.jpeg";
@@ -13,6 +17,7 @@ import Actualites from '../components/layout/Actualites';
 const Home = () => {
   const [showMap, setShowMap] = React.useState(false);
   const [lastNews, setLastNews] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
   // Données des actualités
   const actualites = [
     {
@@ -76,8 +81,22 @@ const Home = () => {
     setLastNews(actualites.slice(0, 3));
   }, [ ]);
 
+  const nextSlide = () => {
+    setCurrentSlide((prev) => {
+      const next = prev + 1;
+      return next >= catalogues.length - 2 ? prev : next;
+    });
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => {
+      const next = prev - 1;
+      return next < 0 ? prev : next;
+    });
+  };
+
   return (
-    <div className="w-full px-4 py-8 relative z-10 text-center">
+    <div className="w-full relative z-10 text-center">
       {/* En-tête de la page d'accueil */}
       <section className="relative min-h-[800px] w-full flex items-center justify-center text-white">
         {/* Background image */}
@@ -88,24 +107,24 @@ const Home = () => {
         ></iframe>
 
         {/* Overlay pour lisibilité */}
-        <div className="absolute inset-0 bg-black/50"></div>
+        <div className="absolute inset-0 bg-black/60"></div>
 
         {/* Contenu principal */}
         <div className="relative z-10 text-center px-4">
-          <h1 className="text-5xl font-bold mb-6">Bienvenue à la Galerie Pol Lemétais</h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6">Bienvenue à la Galerie Pol Lemétais</h1>
+          <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
             Découvrez notre collection d&apos;art contemporain et nos expositions.
           </p>
 
           {/* Boutons */}
-          <div className="mt-6 flex justify-center gap-4">
+          <div className="mt-8 flex justify-center gap-4">
             <button 
-              className="px-6 py-3 bg-red-600 text-white text-lg font-semibold rounded-lg hover:bg-red-700 transition"
+              className="px-8 py-3 bg-[#8B2323] text-white text-lg font-semibold rounded-lg hover:bg-[#6b1a1a] transition-colors duration-300"
             >
               Découvrir
             </button>
             <button 
-              className="px-6 py-3 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition"
+              className="px-8 py-3 bg-gray-200 text-gray-800 text-lg font-semibold rounded-lg hover:bg-gray-300 transition-colors duration-300"
               onClick={() => setShowMap(true)}
             >
               Visite Virtuelle
@@ -115,10 +134,10 @@ const Home = () => {
 
         {/* Carte virtuelle en plein écran */}
         {showMap && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
             {/* Bouton de fermeture */}
             <button 
-              className="absolute top-4 right-4 bg-white text-black px-4 py-2 rounded-lg font-bold hover:bg-gray-200 transition"
+              className="absolute top-6 right-6 bg-white text-black px-4 py-2 rounded-lg font-bold hover:bg-gray-200 transition z-50"
               onClick={() => setShowMap(false)}
             >
               ✖ Fermer
@@ -127,7 +146,7 @@ const Home = () => {
             {/* Iframe pour la carte virtuelle */}
             <iframe 
               src="https://tourmkr.com/F1yJJLVwyx/44695806p&123.95h&89.96t"
-              className="w-[90%] h-[90%] rounded-lg shadow-lg"
+              className="w-full h-full max-w-screen-xl max-h-[90vh] rounded-lg shadow-lg"
               allowFullScreen
             ></iframe>
           </div>
@@ -141,35 +160,30 @@ const Home = () => {
         
       
 
-      {/* Section a propos de nous */}
-      <section className="relative py-16 px-6 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-        {/* Effet d'arrière-plan artistique */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500 opacity-20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-blue-600 opacity-25 rounded-full blur-2xl"></div>
-        </div>
+      {/* Section La Galerie */}
+      <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-white mx-8">
 
-        {/* Contenu  */}
-        <div className="relative z-10 max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center text-white mb-12">
-            🖼️ À propos de nous
+        {/* Contenu */}
+        <div className="relative z-10 ">
+          <h2 className="text-4xl font-black text-gray-900 text-center mb-12 uppercase relative after:absolute after:bottom-[-8px] after:left-1/2 after:-translate-x-1/2 after:w-16 after:h-1 after:bg-[#8B2323]">
+             La Galerie
           </h2>
 
-          {/* Carte coupée en deux */}
+          {/* Layout for text and image */}
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex flex-col lg:flex-row bg-white bg-opacity-90 backdrop-blur-md shadow-2xl rounded-xl overflow-hidden"
+            className="flex flex-col gap-12 lg:flex-row"
           >
             {/* Partie Gauche - Présentation */}
-            <div className="lg:w-1/2 p-8 flex flex-col justify-center">
+            <div className="lg:w-1/2 p-0 lg:pr-8 flex flex-col justify-center text-left">
               <h3 className="text-3xl font-semibold text-gray-900 mb-4">
                 Galerie Pol Lemétais
               </h3>
               <p className="text-gray-700 text-lg leading-relaxed">
-                La Galerie Pol Lemétais est un espace dédié à l’art contemporain,
-                où la créativité rencontre l’émotion. Nous mettons en lumière des
+                La Galerie Pol Lemétais est un espace dédié à l'art contemporain,
+                où la créativité rencontre l'émotion. Nous mettons en lumière des
                 artistes émergents et confirmés à travers des expositions uniques.
               </p>
 
@@ -177,14 +191,14 @@ const Home = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="mt-6 self-start px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-400 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-500 transition duration-300"
+                className="mt-8 self-start px-8 py-3 bg-[#8B2323] text-white font-semibold  shadow-md hover:bg-[#6b1a1a] transition duration-300"
               >
                 Découvrir
               </motion.button>
             </div>
 
             {/* Partie Droite - Image */}
-            <div className="lg:w-1/2 relative">
+            <div className="lg:w-1/2 relative h-96 lg:h-auto mt-8 lg:mt-0">
               <motion.img
                 src={galerieImage}
                 alt="Galerie d'art"
@@ -198,35 +212,78 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="relative py-16 px-6 bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-        <div className="bg-white max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900 text-center mb-10">Nos catalogues</h2>
+      {/* Section Catalogues */}  
+      <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-white mx-8">  
+        <div className="px-4 sm:px-6 lg:px-8">
+           <h2 className="text-4xl font-black tracking-tight text-gray-900 text-center mb-10 uppercase relative after:absolute after:bottom-[-8px] after:left-1/2 after:-translate-x-1/2 after:w-16 after:h-1 after:bg-[#8B2323]">
+            Les Catalogues
+          </h2>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Swiper Container */}
+        <div className="relative ">
+          {/* Navigation Buttons */}
+          <button 
+            onClick={() => window.swiperInstance?.slidePrev()}
+            className="absolute -left-20 top-1/2 -translate-y-1/2 text-black p-4 transition-transform duration-300 hover:scale-125 z-10"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={4} stroke="currentColor" className="w-14 h-14">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+          </button>
+          <button 
+            onClick={() => window.swiperInstance?.slideNext()}
+            className="absolute -right-20 top-1/2 -translate-y-1/2 text-black p-4 transition-transform duration-300 hover:scale-125 z-10"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={4} stroke="currentColor" className="w-14 h-14">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+
+          {/* Swiper */}
+          <Swiper
+            modules={[Navigation, Pagination]}
+            spaceBetween={32}
+            slidesPerView={3}
+            className="catalog-swiper"
+            onSwiper={(swiper) => {
+              window.swiperInstance = swiper;
+            }}
+          >
             {catalogues.map((catalogue) => (
-              <div key={catalogue.id} className="group relative bg-gray-100 rounded-lg overflow-hidden shadow-md">
-                <img 
-                  src={catalogue.image} 
-                  alt={catalogue.titre} 
-                  className="w-full h-64 object-cover group-hover:opacity-80 transition duration-300"
-                />
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-900">{catalogue.titre}</h3>
-                  <p className="text-sm text-gray-600 mt-2">{catalogue.description}</p>
-                </div>
-              </div>
+              <SwiperSlide key={catalogue.id}>
+                <motion.div 
+                  className="group relative bg-black overflow-hidden shadow-md h-[500px] flex flex-col"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Link to={`/catalogue/${catalogue.id}`} className="absolute inset-0 z-10">
+                    <div className="h-[350px] overflow-hidden">
+                      <img 
+                        src={catalogue.image} 
+                        alt={catalogue.titre} 
+                        className="w-full h-90 object-container group-hover:opacity-80 transition duration-300"
+                      />
+                    </div>
+                    <div className="p-6 text-left">
+                      <h3 className="text-xl font-semibold text-white line-clamp-1 uppercase tracking-wider mt-2 mb-6">{catalogue.titre}</h3>
+                      <span className="text-[#8B2323] text-md font-medium uppercase tracking-wider">Artiste</span>
+                    </div>
+                  </Link>
+                </motion.div>
+              </SwiperSlide>
             ))}
-          </div>
+          </Swiper>
+        </div>
 
-          {/* Bouton Voir la Boutique */}
-          <div className="mt-10 text-center">
-            <a 
-              href="#" 
-              className="inline-block px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-300"
-            >
-              Voir la boutique
-            </a>
-          </div>
+        {/* Bouton Voir la Boutique */}
+        <div className="mt-16 text-center px-4 sm:px-6 lg:px-8">
+          <a 
+            href="#" 
+            className="inline-block px-12 py-4 bg-[#8B2323] text-white font-semibold shadow-md hover:bg-[#6b1a1a] transition duration-300 tracking-wider text-lg"
+          >
+            Visiter la boutique
+          </a>
         </div>
       </section>
     </div>

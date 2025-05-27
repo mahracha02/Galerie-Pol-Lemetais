@@ -40,7 +40,7 @@ final class ActualitesController extends AbstractController{
     public function show(ActualitesRepository $actualitesRepository): JsonResponse
     {
         // Récupérer les actualités publiées triées par date (descendant)
-        $actualites = $actualitesRepository->findBy(['published' => true], ['date' => 'DESC'], );
+        $actualites = $actualitesRepository->findBy(['published' => true], ['date' => 'DESC'], 3 );
 
         if (empty($actualites)) {
             return $this->json(['message' => 'Aucune actualité trouvée'], Response::HTTP_NOT_FOUND);
