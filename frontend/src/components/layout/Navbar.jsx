@@ -17,9 +17,9 @@ const Navbar = () => {
   const navLinks = [
     { path: "/", label: "Accueil" },
     { path: "/aPropos", label: "Galerie" },
+    { path: "/artistes", label: "Artistes" },
     { path: "/expositions", label: "Expositions" },
     { path: "/evenements", label: "Evénements" },
-    { path: "/artistes", label: "Artistes" },
     { path: "/shop", label: "Boutique" },
     { path: "/contact", label: "Contact" },
   ];
