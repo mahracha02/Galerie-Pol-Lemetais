@@ -9,6 +9,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 
+
 #[ORM\Entity(repositoryClass: ExpositionRepository::class)]
 #[ApiResource] 
 class Exposition
@@ -49,11 +50,23 @@ class Exposition
     #[ORM\JoinColumn(nullable: false)]
     private ?Artiste $artistePrincipal = null;
 
+    /**
+     * @var Collection<int, Actualites>
+     */
+    #[ORM\OneToMany(targetEntity: Actualites::class, mappedBy: 'exposition')]
+    private Collection $actualites;
+
+    #[ORM\Column]
+    private ?bool $published = null;
+
+
+
     
 
     public function __construct()
     {
         $this->artists = new ArrayCollection();
+        $this->actualites = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -180,6 +193,49 @@ class Exposition
 
         return $this;
     }
+
+    /**
+     * @return Collection<int, Actualites>
+     */
+    public function getActualites(): Collection
+    {
+        return $this->actualites;
+    }
+
+    public function addActualite(Actualites $actualite): static
+    {
+        if (!$this->actualites->contains($actualite)) {
+            $this->actualites->add($actualite);
+            $actualite->setExposition($this);
+        }
+
+        return $this;
+    }
+
+    public function removeActualite(Actualites $actualite): static
+    {
+        if ($this->actualites->removeElement($actualite)) {
+            // set the owning side to null (unless already changed)
+            if ($actualite->getExposition() === $this) {
+                $actualite->setExposition(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function isPublished(): ?bool
+    {
+        return $this->published;
+    }
+
+    public function setPublished(bool $published): static
+    {
+        $this->published = $published;
+
+        return $this;
+    }
+
 
     
 }

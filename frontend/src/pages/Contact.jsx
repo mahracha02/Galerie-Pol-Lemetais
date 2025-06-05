@@ -22,19 +22,68 @@ const Contact = () => {
   const position = [43.596089, 1.449292]; // adresse de la galerie
 
   const [formData, setFormData] = useState({
-    fullName: "",
+    nom: "",
+    prenom: "",
     email: "",
-    phone: "",
-    message: ""
+    telephone: "",
+    message: "",
+    createdDate: Date,
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted", formData);
+    setIsSubmitting(true);
+    setSubmitStatus({ type: '', message: '' });
+
+    try {
+      const formDataWithDate = {
+        ...formData,
+        createdDate: new Date().toISOString().slice(0, 19).replace('T', ' ')
+      };
+
+      const response = await fetch('/contacts/api/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formDataWithDate),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'envoi du message');
+      }
+
+      setSubmitStatus({
+        type: 'success',
+        message: 'Votre message a été envoyé avec succès !'
+      });
+      
+      // Réinitialiser le formulaire
+      setFormData({
+        nom: "",
+        prenom: "",
+        email: "",
+        telephone: "",
+        message: "",
+        createdDate: new Date()
+      });
+
+    } catch (error) {
+      setSubmitStatus({
+        type: 'error',
+        message: 'Une erreur est survenue. Veuillez réessayer.'
+      });
+      console.error('Erreur:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -78,15 +127,44 @@ const Contact = () => {
           className="relative max-w-2xl w-full bg-gray-900 p-8 rounded-lg shadow-2xl backdrop-blur-md">
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {submitStatus.message && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`p-4 rounded-md ${
+                  submitStatus.type === 'success' 
+                    ? 'bg-green-100 text-green-700' 
+                    : 'bg-red-100 text-red-700'
+                }`}
+              >
+                {submitStatus.message}
+              </motion.div>
+            )}
+
             <motion.div 
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}>
-              <label className="block text-sm font-medium">Nom complet</label>
+              <label className="block text-sm font-medium">Nom</label>
               <input 
                 type="text" 
-                name="fullName" 
-                value={formData.fullName} 
+                name="nom" 
+                value={formData.nom} 
+                onChange={handleChange}
+                className="w-full mt-2 p-3 rounded-md bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none" 
+                required 
+              />
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}>
+              <label className="block text-sm font-medium">Prénom</label>
+              <input 
+                type="text" 
+                name="prenom" 
+                value={formData.prenom} 
                 onChange={handleChange}
                 className="w-full mt-2 p-3 rounded-md bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none" 
                 required 
@@ -94,7 +172,7 @@ const Contact = () => {
             </motion.div>
             
             <motion.div 
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}>
               <label className="block text-sm font-medium">Email</label>
@@ -109,21 +187,21 @@ const Contact = () => {
             </motion.div>
 
             <motion.div 
-              initial={{ opacity: 0, x: -50 }}
+              initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}>
               <label className="block text-sm font-medium">Téléphone</label>
               <input 
                 type="tel" 
-                name="phone" 
-                value={formData.phone} 
+                name="telephone" 
+                value={formData.telephone} 
                 onChange={handleChange}
                 className="w-full mt-2 p-3 rounded-md bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none" 
               />
             </motion.div>
             
             <motion.div 
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}>
               <label className="block text-sm font-medium">Message</label>
@@ -141,8 +219,14 @@ const Contact = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit"
-              className="w-full bg-indigo-600 py-3 rounded-md text-white font-semibold hover:bg-indigo-700 transition">
-              Envoyer
+              disabled={isSubmitting}
+              className={`w-full py-3 rounded-md text-white font-semibold transition ${
+                isSubmitting 
+                  ? 'bg-indigo-400 cursor-not-allowed' 
+                  : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
+            >
+              {isSubmitting ? 'Envoi en cours...' : 'Envoyer'}
             </motion.button>
           </form>
         </motion.div>

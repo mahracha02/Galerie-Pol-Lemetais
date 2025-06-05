@@ -21,7 +21,7 @@ const OeuvreDetails = () => {
   if (!oeuvre) return <div className="text-center mt-10">Chargement...</div>;
 
   // Gestion des images secondaires (ex : "http://127.0.0.1:8000/photos/img1.jpg,img2.jpg,img3.jpg")
-  const baseUrl = "http://127.0.0.1:8000/photos/";
+  const baseUrl = "http://127.0.0.1:8000/uploads/";
 
   const secondaryImages = oeuvre.images_secondaires
     ? oeuvre.images_secondaires
@@ -30,7 +30,7 @@ const OeuvreDetails = () => {
         .filter((img) => img && img !== oeuvre.image_principale)
         .map((img) =>
           img.startsWith('http://') || img.startsWith('https://')
-            ? img
+            ? img.replace('https://', 'http://')
             : baseUrl + img
         )
     : [];
