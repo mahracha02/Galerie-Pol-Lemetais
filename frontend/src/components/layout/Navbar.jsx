@@ -4,6 +4,7 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { useGoogleTranslateScript, changeLanguage } from "../../hooks/useGoogleTranslate";
 import logo from "../../assets/photos/logo.jpg";
+import "../../assets/fonts/KenyanCoffeeRg.otf";
 
 const Navbar = () => {
   const location = useLocation();
@@ -17,7 +18,7 @@ const Navbar = () => {
     { path: "/", label: "Accueil" },
     { path: "/aPropos", label: "Galerie" },
     { path: "/expositions", label: "Expositions" },
-    { path: "/evenements", label: "Événements" },
+    { path: "/evenements", label: "Evénements" },
     { path: "/artistes", label: "Artistes" },
     { path: "/shop", label: "Boutique" },
     { path: "/contact", label: "Contact" },
@@ -29,26 +30,27 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
+    <nav className="fixed w-full z-50 bg-white shadow-md">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-16">
+        <div className="flex justify-between h-24 items-center">
           {/* Logo de la galerie et nom */}
           <div className="flex-shrink-0 flex items-center space-x-3">
             <Link to="/">
-              <img src={logo} alt="Logo de la galerie" className="h-10 w-auto" />
+              <img src={logo} alt="Logo de la galerie" className="h-18 w-auto" />
             </Link>
-            <Link to="/" className="text-xl font-bold text-gray-800 tracking-tight">
+            <Link to="/" className="gallery-name text-[#000000]">
               Galerie Pol Lemétais
             </Link>
           </div>
 
           {/* Liens de navigation (Desktop) */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-8">
             {navLinks.map(({ path, label }) => (
               <Link
                 key={path}
                 to={path}
-                className={`text-gray-700 hover:text-[#8B2323] font-medium text-sm relative ${location.pathname === path ? 'text-[#8B2323] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-[#8B2323] after:w-full' : ''}`}
+                className={`text-[#000000] hover:text-[#972924] font-medium text-lg relative ${location.pathname === path ? 'text-[#8B2323] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:h-0.5 after:bg-[#972924] after:w-1/2' : ''}`}
+                style={{ fontFamily: 'Poppins, sans-serif' }}
               >
                 {label}
               </Link>
@@ -58,10 +60,11 @@ const Navbar = () => {
             <div className="relative">
               <button
                 onClick={() => setLanguageDropdownOpen((prev) => !prev)}
-                className="flex items-center px-3 py-1 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:border-[#8B2323] transition-colors duration-200"
+                className="flex items-center px-2 py-1 border border-[#972924] border-[0.1rem] text-lg text-gray-700 hover:border-[#8B2323] transition-colors duration-200 ml-8 mr-6"
+                style={{ fontFamily: 'Poppins, sans-serif' }}
               >
                 <span className="mr-1">FR</span>
-                <ChevronDown className="h-4 w-4 text-gray-500" />
+                <ChevronDown className="h-6 w-6 text-[#972924]" />
               </button>
 
               {/* Dropdown des langues */}
@@ -173,7 +176,7 @@ const Navbar = () => {
                   key={path}
                   to={path}
                   onClick={() => setMenuOpen(false)}
-                  className={`block text-base font-medium text-gray-700 hover:text-[#8B2323] ${location.pathname === path ? 'text-[#8B2323]' : ''}`}
+                  className={`block text-base font-medium text-gray-700 hover:text-[#8B2323] font-poppins ${location.pathname === path ? 'text-[#8B2323]' : ''}`}
                 >
                   {label}
                 </Link>

@@ -11,9 +11,79 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 #[Route('/actualites')]
 final class ActualitesController extends AbstractController{
+
+    private string $uploadDir;
+
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private ActualitesRepository $actualitesRepository,
+        private SerializerInterface $serializer,
+        private SluggerInterface $slugger,
+        private ParameterBagInterface $params
+    ) {
+        $this->uploadDir = $this->params->get('kernel.project_dir') . '/public/uploads/actualites/';
+        if (!file_exists($this->uploadDir)) {
+            mkdir($this->uploadDir, 0777, true);
+        }
+    }
+
+    private function handleImageUpload($imageData): ?string
+    {
+        if (!$imageData) {
+            return null;
+        }
+
+        try {
+            // Check if the image data is base64
+            if (strpos($imageData, 'data:image') === 0) {
+                // Extract the base64 data
+                $imageData = explode(',', $imageData)[1];
+            }
+
+            // Decode base64 data
+            $decodedData = base64_decode($imageData);
+            if ($decodedData === false) {
+                throw new \Exception('Invalid base64 image data');
+            }
+
+            // Generate unique filename
+            $originalFilename = uniqid() . '.png';
+            $safeFilename = $this->slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.png';
+
+            // Ensure upload directory exists
+            if (!file_exists($this->uploadDir)) {
+                mkdir($this->uploadDir, 0777, true);
+            }
+
+            // Save the file
+            $filePath = $this->uploadDir . $newFilename;
+            $result = file_put_contents($filePath, $decodedData);
+
+            if ($result === false) {
+                throw new \Exception('Failed to save image file');
+            }
+
+            // Verify the file was created
+            if (!file_exists($filePath)) {
+                throw new \Exception('File was not created successfully');
+            }
+
+            // Return the relative path for storage in database
+            return  $newFilename;
+        } catch (\Exception $e) {
+            // Log the error
+            error_log('Image upload error: ' . $e->getMessage());
+            throw new \Exception('Failed to upload image: ' . $e->getMessage());
+        }
+    }
+
     #[Route('', name: 'api_actualites_index', methods: ['GET'])]
     public function index(ActualitesRepository $actualitesRepository): JsonResponse
     {
@@ -35,7 +105,7 @@ final class ActualitesController extends AbstractController{
         return $this->json($data);
     }
      
-    // API: Récupérer tous les actualités
+    // API: Récupérer 3 actualités
     #[Route('/api', name: 'api_actualites_show', methods: ['GET'])]
     public function show(ActualitesRepository $actualitesRepository): JsonResponse
     {
@@ -53,10 +123,10 @@ final class ActualitesController extends AbstractController{
                 'title' => $actu->getTitre(),
                 'date' => $actu->getDate() ? $actu->getDate()->format('Y-m-d') : null,
                 'description' => $actu->getDescription(),
-                'image' => $this->getParameter('app.base_url')."photos/".$actu->getImage(),
-                'link' => $actu->getLink() ?? '#', // Optional
-                'nouveau' => $actu->isNouveau() ?? false, // Optional, if you have this field
-                'published' => $actu->isPublished() ?? false, // Optional, if you have this field
+                'image' => $this->getParameter('app.base_url').'/uploads/actualites/' . $actu->getImage(),
+                'link' => $actu->getLink() ?? '#',
+                'nouveau' => $actu->isNouveau() ?? false,
+                'published' => $actu->isPublished() ?? false,
             ];
         }, $actualites);
 
@@ -80,10 +150,10 @@ final class ActualitesController extends AbstractController{
                 'title' => $actu->getTitre(),
                 'date' => $actu->getDate() ? $actu->getDate()->format('Y-m-d') : null,
                 'description' => $actu->getDescription(),
-                'image' => $this->getParameter('app.base_url')."photos/".$actu->getImage(),
-                'link' => $actu->getLink() ?? '#', // Optional
-                'nouveau' => $actu->isNouveau() ?? false, // Optional, if you have this field
-                'published' => $actu->isPublished() ?? false, // Optional, if you have this field
+                'image' => $this->getParameter('app.base_url').'/uploads/actualites/' . $actu->getImage(),
+                'link' => $actu->getLink() ?? '#',
+                'nouveau' => $actu->isNouveau() ?? false,
+                'published' => $actu->isPublished() ?? false,
             ];
         }, $actualites);
 
@@ -101,9 +171,9 @@ final class ActualitesController extends AbstractController{
             'title' => $actualite->getTitre(),
             'date' => $actualite->getDate() ? $actualite->getDate()->format('Y-m-d') : null,
             'description' => $actualite->getDescription(),
-            'image' => $actualite->getImage(), // Make sure you have this getter
-            'link' => $actualite->getLink() ?? '#', // Optional
-            'nouveau' => $actualite->isNouveau() ?? false, // Optional, if you have this field
+            'image' => $actualite->getImage() ? '/uploads/actualites/' . $actualite->getImage() : null,
+            'link' => $actualite->getLink() ?? '#',
+            'nouveau' => $actualite->isNouveau() ?? false,
         ];
 
         return $this->json($data);
@@ -118,7 +188,12 @@ final class ActualitesController extends AbstractController{
         $actualite->setTitre($data['titre']);
         $actualite->setDescription($data['description']);
         $actualite->setDate(new \DateTime($data['date']));
-        $actualite->setImage($data['image']);
+        
+        if (isset($data['image'])) {
+                $imagePath = $this->handleImageUpload($data['image']);
+                $actualite->setImage($imagePath);
+        } 
+
         $actualite->setLink($data['link']);
         $actualite->setNouveau(true);
         $actualite->setPublished($data['published'] ?? false); // Optional
@@ -137,7 +212,14 @@ final class ActualitesController extends AbstractController{
         $actualite->setTitre($data['titre']);
         $actualite->setDescription($data['description']);
         $actualite->setDate(new \DateTime($data['date']));
-        $actualite->setImage($data['image']);
+        
+        if (isset($data['image'])) {
+            $imagePath = $this->handleImageUpload($data['image']);
+            $actualite->setImage($imagePath);
+        } else {
+            $actualite->setImage(null); // Handle case where no image is provided
+        }
+
         $actualite->setLink($data['link']);
         $actualite->setNouveau($data['nouveau'] ?? false);
         $actualite->setPublished($data['published'] ?? false);
