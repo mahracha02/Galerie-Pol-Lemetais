@@ -57,8 +57,8 @@ const Footer = () => {
           </div>
 
           {/* Right Section - Navigation */}
-          <div className="flex flex-col items-center text-center mt-12">
-            <h3 className="text-5xl md:text-[1.5rem] text-[#FFFFFF] mb-3" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>Galerie</h3>
+          <div className="flex flex-col mt-12 text-left md:ml-40">
+            <h3 className="text-5xl md:text-[1.5rem] text-[#FFFFFF] mb-3 " style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>Galerie</h3>
             <ul className="space-y-3 text-[#FFFFFF] text-md"
               style={{ fontFamily: 'Poppins Regular, sans-serif' }}
             >

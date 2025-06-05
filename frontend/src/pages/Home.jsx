@@ -68,7 +68,7 @@ const Home = () => {
   return (
     <div className="w-full relative z-10 text-center">
       {/* En-tête de la page d'accueil */}
-      <section className="relative min-h-[40rem] md:min-h-[59rem] w-full flex items-end justify-start text-white">
+      <section className="relative min-h-[40rem] md:min-h-[53rem] w-full flex items-end justify-start text-white">
         {/* Background image */}
         <img
           src={galerieImage}

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar.jsx';
 import Footer from './components/layout/Footer.jsx';
 import Home from './pages/Home';
+import About from './pages/Apropos.jsx';
 import Expositions from "./pages/Expositions";
 import ExpoDetails from './pages/ExpoDetails.jsx';
 import Evenements from "./pages/Evenements.jsx";
@@ -28,6 +29,7 @@ const App = () => {
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/aPropos" element={<About />} />
             <Route path="/expositions" element={<Expositions />} />
             <Route path="/expositions/:id" element={ <ExpoDetails />} />
             <Route path="/evenements" element={<Evenements />} />
