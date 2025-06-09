@@ -58,7 +58,7 @@ final class ExpositionController extends AbstractController
                 'date_debut' => $formatter->format($expo->getDateDebut()),
                 'date_fin' => $formatter->format($expo->getDateFin()),
                 'image' => $this->getParameter('app.base_url')."photos/" . $expo->getImage(),
-                'catalogue_url' => $expo->getCatalogueUrl(),
+                'catalogue' => $expo->getCatalogue(),
                 'artiste_principal' => $expo->getArtistePrincipal() ? [
                     'id' => $expo->getArtistePrincipal()->getId(),
                     'nom' => $expo->getArtistePrincipal()->getNom(),
@@ -98,7 +98,7 @@ final class ExpositionController extends AbstractController
                 'date_debut' => $expo->getDateDebut()->format('Y-m-d'),
                 'date_fin' => $expo->getDateFin()->format('Y-m-d'),
                 'image' => $this->getParameter('app.base_url')."photos/" . $expo->getImage(),
-                'catalogue_url' => $expo->getCatalogueUrl(),
+                'catalogue' => $expo->getCatalogue(),
                 'artiste_principal' => $expo->getArtistePrincipal() ? [
                     'id' => $expo->getArtistePrincipal()->getId(),
                     'nom' => $expo->getArtistePrincipal()->getNom(),
@@ -135,7 +135,7 @@ final class ExpositionController extends AbstractController
             'date_debut' => $formatter->format($exposition->getDateDebut()),
             'date_fin' => $formatter->format($exposition->getDateFin()),
             'image' => $this->getParameter('app.base_url') . "photos/" . $exposition->getImage(),
-            'catalogue_url' => $exposition->getCatalogueUrl(),
+            'catalogue' => $exposition->getCatalogue(),
             'artiste_principal' => $exposition->getArtistePrincipal() ? [
                 'id' => $exposition->getArtistePrincipal()->getId(),
                 'nom' => $exposition->getArtistePrincipal()->getNom(),
@@ -186,7 +186,7 @@ final class ExpositionController extends AbstractController
                 $exposition->setAnnee($data['annee'] ?? date('Y'));
                 $exposition->setDateDebut(new \DateTime($data['date_debut']));
                 $exposition->setDateFin(new \DateTime($data['date_fin']));
-                $exposition->setCatalogueUrl($data['catalogue_url'] ?? '');
+                $exposition->setCatalogue($data['catalogue'] ?? '');
                 $exposition->setPublished($data['published'] ?? false);
 
                 // Gestion de l'image
@@ -273,7 +273,7 @@ final class ExpositionController extends AbstractController
                 $actualite->setDate(new \DateTime());
                 $actualite->setDescription($exposition->getDescription());
                 $actualite->setImage($exposition->getImage());
-                $actualite->setLink($exposition->getCatalogueUrl());
+                $actualite->setLink($exposition->getCatalogue());
                 $actualite->setNouveau(true);
                 $actualite->setPublished($exposition->isPublished());
                 $actualite->setExposition($exposition);
@@ -340,7 +340,7 @@ final class ExpositionController extends AbstractController
                 $exposition->setAnnee($data['annee'] ?? date('Y'));
                 $exposition->setDateDebut(new \DateTime($data['date_debut']));
                 $exposition->setDateFin(new \DateTime($data['date_fin']));
-                $exposition->setCatalogueUrl($data['catalogue_url'] ?? '');
+                $exposition->setCatalogue($data['catalogue'] ?? '');
                 $exposition->setPublished($data['published'] ?? false);
 
                 // Gestion de l'image
@@ -407,7 +407,7 @@ final class ExpositionController extends AbstractController
                         $actualite->setDate(new \DateTime());
                         $actualite->setDescription($exposition->getDescription());
                         $actualite->setImage($exposition->getImage());
-                        $actualite->setLink($exposition->getCatalogueUrl());
+                        $actualite->setLink($exposition->getCatalogue());
                         $actualite->setNouveau(true);
                         $actualite->setPublished($exposition->isPublished());
                     }
@@ -417,7 +417,7 @@ final class ExpositionController extends AbstractController
                     $actualite->setDate(new \DateTime());
                     $actualite->setDescription($exposition->getDescription());
                     $actualite->setImage($exposition->getImage());
-                    $actualite->setLink($exposition->getCatalogueUrl());
+                    $actualite->setLink($exposition->getCatalogue());
                     $actualite->setNouveau(true);
                     $actualite->setPublished($exposition->isPublished());
                     $actualite->setExposition($exposition);

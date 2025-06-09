@@ -1,5 +1,5 @@
 //import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/layout/Navbar.jsx';
 import Footer from './components/layout/Footer.jsx';
 import Home from './pages/Home';
@@ -10,6 +10,7 @@ import Evenements from "./pages/Evenements.jsx";
 import Artistes from "./pages/Artistes";
 import DetailsArtiste from './pages/DetailsArtiste.jsx';
 import Contact from "./pages/Contact";
+import Login from './pages/Login';
 import AdminDashboardPage from './components/Admin/Dashboard.jsx';
 import ActualitesPage from './components/Admin/ActualitesList.jsx';
 import EvenementsPage from './components/Admin/EvenementsList.jsx';
@@ -21,6 +22,15 @@ import ContactsPage from './components/Admin/ContactsList.jsx';
 import NotFound from './pages/NotFound';
 import OeuvreDetails from './pages/OeuvreDetails.jsx';
 
+// Composant de protection des routes admin
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
 const App = () => {
   return (
     <Router>
@@ -28,23 +38,59 @@ const App = () => {
         <Navbar />
         <main className="flex-grow">
           <Routes>
+            {/* Routes publiques */}
             <Route path="/" element={<Home />} />
             <Route path="/aPropos" element={<About />} />
             <Route path="/expositions" element={<Expositions />} />
-            <Route path="/expositions/:id" element={ <ExpoDetails />} />
+            <Route path="/expositions/:id" element={<ExpoDetails />} />
             <Route path="/evenements" element={<Evenements />} />
             <Route path="/artistes" element={<Artistes />} />
-            <Route path="/artistes/:id" element ={<DetailsArtiste />} />
+            <Route path="/artistes/:id" element={<DetailsArtiste />} />
             <Route path="/oeuvres/:id" element={<OeuvreDetails />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/admin" element={<AdminDashboardPage />} />
-            <Route path="/admin/actualites" element={<ActualitesPage />} />
-            <Route path="/admin/evenements" element={<EvenementsPage />} />
-            <Route path="/admin/expositions" element={<ExpositionsPage />} />
-            <Route path="/admin/artistes" element={<ArtistesPage />} />
-            <Route path="/admin/oeuvres" element={<OeuvresPage />} />
-            <Route path="/admin/utilisateurs" element={<UsersPage />} />
-            <Route path="/admin/contacts" element={<ContactsPage />} />
+            <Route path="/login" element={<Login />} />
+
+            {/* Routes protégées */}
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/actualites" element={
+              <ProtectedRoute>
+                <ActualitesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/evenements" element={
+              <ProtectedRoute>
+                <EvenementsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/expositions" element={
+              <ProtectedRoute>
+                <ExpositionsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/artistes" element={
+              <ProtectedRoute>
+                <ArtistesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/oeuvres" element={
+              <ProtectedRoute>
+                <OeuvresPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/utilisateurs" element={
+              <ProtectedRoute>
+                <UsersPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/contacts" element={
+              <ProtectedRoute>
+                <ContactsPage />
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

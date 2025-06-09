@@ -2,27 +2,43 @@ import { useEffect, useState } from 'react';
 
 const Actualites = () => {
   const [actualites, setActualites] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/actualites/api');
+        setLoading(true);
+        const response = await fetch(`/actualites/api?page=${page}&limit=3`);
         if (!response.ok) throw new Error('Failed to fetch actualites');
         const data = await response.json();
-        setActualites(data);
+        
+        setActualites(prevActualites => {
+          if (page === 1) return data;
+          return [...prevActualites, ...data];
+        });
       } catch (error) {
         console.error("Erreur lors du chargement des actualités :", error);
-        // Optionally set an error state to display a message to the user
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [page]);
 
-  return (
-    <section className="relative py-4 px-4 sm:px-6 lg:px-8 bg-white mt-26 mx-4 sm:mx-8">
+  const handleScroll = (e) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.target;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5) {
+      setPage(prev => prev + 1);
+    }
+  };
+
+  return (  
+    <section className="relative py-4 px-4 sm:px-6 lg:px-8 bg-white mt-26 mx-4 sm:mx-8" onScroll={handleScroll}>
       <h2 className="relative z-10 text-left text-3xl sm:text-5xl md:text-[4.5rem] text-[#000000] mb-6" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
         ACTUALITÉ
       </h2>
+
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {actualites.map((news) => (
           <div
@@ -32,6 +48,7 @@ const Actualites = () => {
             <img
               src={news.image}
               alt={news.titre}
+              loading="lazy"
               className="w-full h-[15rem] sm:h-[25rem] object-cover"
             />
             <div className="relative z-10 text-left p-4 px-6 text-[#FFFFFF] flex flex-col h-full">
@@ -49,6 +66,12 @@ const Actualites = () => {
           </div>
         ))}
       </div>
+
+      {loading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#972924]"></div>
+        </div>
+      )}
     </section>
   );
 };
