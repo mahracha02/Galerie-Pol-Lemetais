@@ -119,6 +119,7 @@ const Home = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                aria-label='Découvrir la galerie'
                 className="mt-6 md:mt-8 self-start px-6 md:px-8 py-2 bg-[#972924] text-[#FFFFFF] shadow-md hover:bg-[#6b1a1a] transition duration-300"
                 style={{ fontFamily: 'Poppins Regular, sans-serif' }}
               >
@@ -152,6 +153,7 @@ const Home = () => {
           {/* Navigation Buttons */}
           <button 
             onClick={() => window.swiperInstance?.slidePrev()}
+            aria-label='Diaporama précédent'    
             className="absolute -left-4 md:-left-20 top-1/2 -translate-y-1/2 text-black p-1 transition-transform duration-300 hover:scale-125 z-10"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-10 h-10 md:w-20 md:h-20">
@@ -160,6 +162,7 @@ const Home = () => {
           </button>
           <button 
             onClick={() => window.swiperInstance?.slideNext()}
+            aria-label='Diaporama suivant'
             className="absolute -right-4 md:-right-20 top-1/2 -translate-y-1/2 text-black p-1 transition-transform duration-300 hover:scale-125 z-10"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-10 h-10 md:w-20 md:h-20">
@@ -192,11 +195,12 @@ const Home = () => {
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Link to={`/catalogue/${catalogue.id}`} className="absolute inset-0 z-10">
+                  <Link to={`/catalogue/${catalogue.id}`} className="absolute inset-0 z-10" aria-label={`Voir le catalogue de ${catalogue.prenom} ${catalogue.nom}`}>
                     <div className="h-[12rem] md:h-[18rem] overflow-hidden">
                       <img 
                         src={catalogue.image} 
-                        alt={catalogue.titre} 
+                        alt={catalogue.prenom + ' ' + catalogue.nom}
+                        loading="lazy" 
                         className="w-full h-full object-cover group-hover:opacity-80 transition duration-300"
                       />
                     </div>
@@ -217,6 +221,7 @@ const Home = () => {
         <div className="mt-12 md:mt-20 mb-6 text-center px-4 sm:px-6 lg:px-8">
           <a 
             href="#" 
+            aria-label='Visiter la boutique'
             className="inline-block self-start px-6 md:px-10 py-2 bg-[#972924] text-[#FFFFFF] shadow-md hover:bg-[#6b1a1a] transition duration-300"
             style={{ fontFamily: 'Poppins Regular, sans-serif' }}
           >

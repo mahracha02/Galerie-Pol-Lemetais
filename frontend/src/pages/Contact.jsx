@@ -214,6 +214,24 @@ const Contact = () => {
                 required
               ></textarea>
             </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="flex items-start space-x-2">
+              <input
+                type="checkbox"
+                id="rgpd-consent"
+                name="rgpdConsent"
+                required
+                className="mt-1 h-4 w-4 rounded border-gray-700 bg-gray-800 text-indigo-600 focus:ring-indigo-500"
+              />
+              <label htmlFor="rgpd-consent" className="text-sm text-gray-300">
+                J'accepte que mes données personnelles soient collectées et traitées conformément à la politique de confidentialité. 
+                Aucune donnée personnelle n'est conservée sans mon autorisation explicite.
+              </label>
+            </motion.div>
             
             <motion.button 
               whileHover={{ scale: 1.05 }}

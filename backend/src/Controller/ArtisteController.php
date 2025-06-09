@@ -10,7 +10,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/artistes')]
 final class ArtisteController extends AbstractController{
-    #[Route('/artiste', name: 'app_artiste')]
+    #[Route('/', name: 'app_artiste')]
     public function index(): Response
     {
         return $this->render('artiste/index.html.twig', [

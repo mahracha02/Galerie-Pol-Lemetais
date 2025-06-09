@@ -107,10 +107,19 @@ final class ActualitesController extends AbstractController{
      
     // API: Récupérer 3 actualités
     #[Route('/api', name: 'api_actualites_show', methods: ['GET'])]
-    public function show(ActualitesRepository $actualitesRepository): JsonResponse
+    public function show(Request $request, ActualitesRepository $actualitesRepository): JsonResponse
     {
-        // Récupérer les actualités publiées triées par date (descendant)
-        $actualites = $actualitesRepository->findBy(['published' => true], ['date' => 'DESC'], 3 );
+        $page = $request->query->getInt('page', 1);
+        $limit = $request->query->getInt('limit', 3);
+        $offset = ($page - 1) * $limit;
+
+        // Récupérer les actualités publiées triées par date (descendant) avec pagination
+        $actualites = $actualitesRepository->findBy(
+            ['published' => true],
+            ['date' => 'DESC'],
+            $limit,
+            $offset
+        );
 
         if (empty($actualites)) {
             return $this->json(['message' => 'Aucune actualité trouvée'], Response::HTTP_NOT_FOUND);
