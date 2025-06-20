@@ -50,9 +50,9 @@ const Evenements = () => {
         setLoading(false);
 
         // Extraire les années uniques
-        const uniqueYears = [...new Set(sortedEvents.map(event => 
-          new Date(event.date_debut).getFullYear()
-        ))].sort((a, b) => b - a);
+        const uniqueYears = [...new Set(sortedEvents.map(event => extractYear(event.date_debut)))]
+          .filter(year => year !== null)
+          .sort((a, b) => b - a);
         setYears(uniqueYears);
       } catch (error) {
         console.error('Erreur lors du chargement des événements:', error);
@@ -75,7 +75,7 @@ const Evenements = () => {
 
       if (selectedYear !== 'Tous') {
         result = result.filter(event => 
-          new Date(event.date_debut).getFullYear().toString() === selectedYear
+          extractYear(event.date_debut)?.toString() === selectedYear
         );
       }
 
@@ -86,7 +86,7 @@ const Evenements = () => {
   }, [search, selectedYear, evenements]);
 
   const groupedEvents = filteredEvenements.reduce((acc, event) => {
-    const year = new Date(event.date_debut).getFullYear();
+    const year = extractYear(event.date_debut);
     if (!acc[year]) acc[year] = [];
     acc[year].push(event);
     return acc;
@@ -99,90 +99,36 @@ const Evenements = () => {
     'all': 'Tous'
   };
   
-  function getMonthFromDate(dateString) {
-    const date = new Date(dateString);  
-    return date.getMonth() + 1; // Les mois sont indexés de 0 à 11, donc on ajoute 1
-  } 
 
-  // Classer les événements
-  const classifyEvents = () => {
-    const now = new Date();
-    let upcomingEvent = null;
-    let currentEvent = null;
-    let pastEvent = null;
-
-    for (const event of evenements) {
-      try {
-        const startDate = new Date(event.date_debut);
-        const endDate = event.date_fin ? new Date(event.date_fin) : startDate;
-
-        if (!upcomingEvent && startDate > now) {
-          upcomingEvent = event;
-        } else if (!currentEvent && startDate <= now && endDate >= now) {
-          currentEvent = event;
-        } else if (!pastEvent && endDate < now) {
-          pastEvent = event;
-        }
-
-        // Si on a trouvé un événement dans chaque catégorie, on peut arrêter
-        if (upcomingEvent && currentEvent && pastEvent) break;
-      } catch (e) {
-        console.error("Date invalide:", event.date_debut);
-      }
-    }
-
-    return { upcomingEvent, currentEvent, pastEvent };
-  };
-
-  const { upcomingEvent, currentEvent, pastEvent } = classifyEvents();
-  const featuredEvent = evenements[1] || null;
-  const otherEvents = evenements.filter(event => event !== upcomingEvent);
-
-  const CountdownRenderer = ({ days, hours, minutes, seconds, completed }) => {
-    if (completed) {
-      return <span className="text-xl font-bold">Événement en cours!</span>;
-    } else {
-      return (
-        <div className="flex justify-center space-x-4 md:space-x-6">
-          {[
-            { value: days, label: 'jours' },
-            { value: hours, label: 'heures' },
-            { value: minutes, label: 'minutes' },
-            { value: seconds, label: 'secondes' }
-          ].map((item, index) => (
-            <div key={index} className="text-center">
-              <div className="text-3xl md:text-4xl font-bold bg-white text-red-600 rounded-lg px-4 py-2 shadow-md">
-                {item.value}
-              </div>
-              <div className="text-sm mt-1 text-white">{item.label}</div>
-            </div>
-          ))}
-        </div>
-      );
-    }
-  };
-  CountdownRenderer.propTypes = {
-    days: PropTypes.number.isRequired,
-    hours: PropTypes.number.isRequired,
-    minutes: PropTypes.number.isRequired,
-    seconds: PropTypes.number.isRequired,
-    completed: PropTypes.bool.isRequired,
-  };
+  
   // Formatage de date
   const formatDate = (dateString) => {
     if (!dateString) return '';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('fr-FR', {
+    // Try native Date first
+    const d = new Date(dateString);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('fr-FR', {
+        weekday: 'long',
         day: 'numeric',
         month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
       });
-    } catch (e) {
-      return dateString;
     }
+    // Fallback: regex for day, month (fr), year
+    const match = dateString.match(/(\d{1,2})\s([a-zA-Zéûîôàèùç]+)\s(\d{4})/);
+    if (match) {
+      const [ , day, monthFr, year ] = match;
+      const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+      const monthIndex = months.findIndex(m => m.toLowerCase() === monthFr.toLowerCase());
+      if (monthIndex !== -1) {
+        const dateObj = new Date(parseInt(year), monthIndex, parseInt(day));
+        return dateObj.toLocaleDateString('fr-FR', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        });
+      }
+    }
+    return 'Date invalide';
   };
 
   const handleSubmit = (e) => {
@@ -309,43 +255,60 @@ const Evenements = () => {
                       {year}
                     </h2>
                   </div>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 ml-8">
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 px-2 sm:px-2 lg:px-4 ml-4">
                     {groupedEvents[year].slice(0, 4).map((event) => (
                       <motion.div 
                         key={event.id} 
-                        className="group relative bg-[#000000] overflow-hidden shadow-md h-[15rem] md:h-[20rem] flex flex-col"
+                        className="group relative bg-[#000000] overflow-hidden shadow-md h-[28rem] md:h-[32rem] lg:h-[37rem] xl:h-[35rem]  flex flex-col"
                         whileHover={{ scale: 1.02 }}
                         transition={{ duration: 0.3 }}
                       >
                         <Link to={`/evenements/${event.id}`} className="absolute inset-0 z-10">
-                          <div className="h-[7rem] md:h-[10rem] overflow-hidden">
+                          <div className="h-[16rem] md:h-[20rem] lg:h-[20rem] overflow-hidden">
                             <img 
                               src={event.image || '/placeholder-event.jpg'} 
                               alt={event.titre} 
-                              className="w-full h-full object-cover group-hover:opacity-80 transition duration-300"
+                              className="w-full h-full object-container group-hover:opacity-80 transition duration-300"
                             />
                           </div>
-                          <div className="p-2 text-left relative mt-1 ml-1">
-                            <h3 className="text-lg md:text-xl lg:text-2xl text-[#FFFFFF] uppercase break-words max-w-[80%]" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
-                              {event.titre}
-                            </h3>
-                            <p className="text-[#FFFFFF] text-xs border-2 border-[#FFFFFF] px-1 uppercase absolute top-2 right-2" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>
-                              <b>{(() => {
-                                try {
-                                  const date = new Date(event.date_debut);
-                                  if (isNaN(date.getTime())) return 'Date invalide';
-                                  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-                                } catch {
-                                  return 'Date invalide';
-                                }
-                              })()}</b>
-                            </p>
+                          <div className="p-2 text-left relative p-4 flex flex-row gap-x-2 justify-between h-full">
+                            {/* Left: Title, Description, Lieu (2/3) */}
+                            <div className="flex flex-col w-2/3 min-w-0 gap-2">
+                              <h3 className="text-[1.5rem] md:text-[1.5rem] lg:text-[2rem] text-[#FFFFFF] uppercase break-words  mb-1" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
+                                {event.titre}
+                              </h3>
+                              <p className="text-[#FFFFFF] text-[0.8rem] md:text-[0.9rem] lg:text-[0.9rem] mt-1 truncate" style={{ fontFamily: 'Poppins Regular, sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {event.description}
+                              </p>
+                              <span className="text-[#B33C36] text-[0.8rem] md:text-[0.9rem] lg:text-[0.9rem] mt-1 flex items-center gap-1" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>
+                                {event.lieu || 'Lieu non spécifié'}
+                              </span>
+                            </div>
+                            {/* Right: Date block (1/3) */}
+                            <div className="flex flex-col items-center w-1/3 min-w-0">
+                              <span className="text-xs text-[#FFFFFF]" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>De</span>
+                              <span
+                                className="text-xs border border-[#FFFFFF] px-1.5 py-0.5 rounded bg-[#000000b0] text-[#FFFFFF] w-full text-center mt-1 break-words"
+                                style={{ fontFamily: 'Poppins Regular, sans-serif', fontSize: '0.75rem' }}
+                                title={formatDate(event.date_debut)}
+                              >
+                                {formatDate(event.date_debut)}
+                              </span>
+                              <span className="text-xs text-[#FFFFFF] mt-1" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>à</span>
+                              <span
+                                className="text-xs border border-[#FFFFFF] px-1.5 py-0.5 rounded bg-[#000000b0] text-[#FFFFFF] w-full text-center mt-1 break-words"
+                                style={{ fontFamily: 'Poppins Regular, sans-serif', fontSize: '0.75rem' }}
+                                title={event.date_fin ? formatDate(event.date_fin) : '...'}
+                              >
+                                {event.date_fin ? formatDate(event.date_fin) : '...'}
+                              </span>
+                            </div>
                           </div>
                         </Link>
                       </motion.div>
                     ))}
                   </div>
-                  {groupedEvents[year].length > 4 && (
+                  {groupedEvents[year].length > 8 && (
                     <div className="text-center mt-8">
                       <button 
                         onClick={() => {/* Implement show more for this year */}}
@@ -399,5 +362,16 @@ const Evenements = () => {
     </div>
   );
 };
+
+// Helper to extract year from French-formatted date string
+function extractYear(dateString) {
+  if (!dateString) return null;
+  // Try native Date first
+  const d = new Date(dateString);
+  if (!isNaN(d.getFullYear())) return d.getFullYear();
+  // Fallback: regex for 4-digit year
+  const match = dateString.match(/\b(19|20)\d{2}\b/);
+  return match ? parseInt(match[0], 10) : null;
+}
 
 export default Evenements;
