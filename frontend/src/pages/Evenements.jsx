@@ -309,35 +309,43 @@ const Evenements = () => {
                       {year}
                     </h2>
                   </div>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 ml-16">
-                    {groupedEvents[year].slice(0, 3).map((event) => (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 ml-8">
+                    {groupedEvents[year].slice(0, 4).map((event) => (
                       <motion.div 
                         key={event.id} 
-                        className="group relative bg-[#000000] overflow-hidden shadow-md h-[20rem] md:h-[35rem] flex flex-col"
+                        className="group relative bg-[#000000] overflow-hidden shadow-md h-[15rem] md:h-[20rem] flex flex-col"
                         whileHover={{ scale: 1.02 }}
                         transition={{ duration: 0.3 }}
                       >
                         <Link to={`/evenements/${event.id}`} className="absolute inset-0 z-10">
-                          <div className="h-[12rem] md:h-[26rem] overflow-hidden">
+                          <div className="h-[7rem] md:h-[10rem] overflow-hidden">
                             <img 
                               src={event.image || '/placeholder-event.jpg'} 
                               alt={event.titre} 
                               className="w-full h-full object-cover group-hover:opacity-80 transition duration-300"
                             />
                           </div>
-                          <div className="p-4 text-left relative mt-2 ml-2">
-                            <h3 className="text-xl md:text-2xl lg:text-[2.5rem] text-[#FFFFFF] uppercase break-words max-w-[70%]" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
+                          <div className="p-2 text-left relative mt-1 ml-1">
+                            <h3 className="text-lg md:text-xl lg:text-2xl text-[#FFFFFF] uppercase break-words max-w-[80%]" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
                               {event.titre}
                             </h3>
-                            <p className="text-[#FFFFFF] text-[1.05rem] border-2 border-[#FFFFFF] px-2 uppercase absolute top-5 right-5" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>
-                              <b>{new Date(event.date_debut).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</b>
+                            <p className="text-[#FFFFFF] text-xs border-2 border-[#FFFFFF] px-1 uppercase absolute top-2 right-2" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>
+                              <b>{(() => {
+                                try {
+                                  const date = new Date(event.date_debut);
+                                  if (isNaN(date.getTime())) return 'Date invalide';
+                                  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+                                } catch {
+                                  return 'Date invalide';
+                                }
+                              })()}</b>
                             </p>
                           </div>
                         </Link>
                       </motion.div>
                     ))}
                   </div>
-                  {groupedEvents[year].length > 3 && (
+                  {groupedEvents[year].length > 4 && (
                     <div className="text-center mt-8">
                       <button 
                         onClick={() => {/* Implement show more for this year */}}

@@ -17,6 +17,7 @@ const ExpoDetails = () => {
   const [showAllArtists, setShowAllArtists] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('description');
+  const [showAllOeuvres, setShowAllOeuvres] = useState(false);
 
   useEffect(() => {
     const fetchExpo = async () => {
@@ -296,6 +297,45 @@ const ExpoDetails = () => {
           </div>
         </div>
       </div>
+      {/* Section Oeuvres à découvrir */}
+      <section className="relative py-8 md:py-16 px-4 sm:px-6 lg:px-8 bg-white mx-4 md:mx-8 mt-12 md:mt-16">
+        <div className="relative z-10">
+          <h3 className="relative z-10 text-left text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] text-[#000000] mb-6 md:mb-10" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
+            OEUVRES A <span className="text-[#972924]">DECOUVRIR</span>
+          </h3>
+          {expo.oeuvres && expo.oeuvres.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                {(showAllOeuvres ? expo.oeuvres : expo.oeuvres.slice(0, 12)).map((oeuvre) => (
+                  <div key={oeuvre.id} className="bg-gray-100 rounded-lg shadow-md overflow-hidden flex flex-col">
+                    <img
+                      src={oeuvre.image || '/placeholder-artwork.jpg'}
+                      alt={oeuvre.titre}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-4 flex-1 flex flex-col justify-between">
+                      <h4 className="text-lg font-bold mb-2" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>{oeuvre.titre}</h4>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {expo.oeuvres.length > 12 && !showAllOeuvres && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={() => setShowAllOeuvres(true)}
+                    className="px-6 py-2 bg-[#972924] text-white rounded shadow hover:bg-[#b33c36] transition font-bold"
+                    style={{ fontFamily: 'Poppins Regular, sans-serif' }}
+                  >
+                    Afficher plus
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-gray-500">Aucune oeuvre à afficher pour cette exposition.</p>
+          )}
+        </div>
+      </section>
     <div/>
   </div>
   );

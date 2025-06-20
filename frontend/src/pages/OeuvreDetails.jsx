@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
+import circle from '../assets/photos/icons/circle.png';
+import Medias from '../components/layout/Medias';
 
 const OeuvreDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [oeuvre, setOeuvre] = useState(null);
   const [imagePrincipale, setImagePrincipale] = useState('');
   const [zoomedImage, setZoomedImage] = useState(null);
@@ -18,11 +21,10 @@ const OeuvreDetails = () => {
       .catch((err) => console.error('Erreur:', err));
   }, [id]);
 
-  if (!oeuvre) return <div className="text-center mt-10">Chargement...</div>;
+  if (!oeuvre) return <div className="text-center mt-10 text-[#0C0C0C]">Chargement...</div>;
 
-  // Gestion des images secondaires (ex : "http://127.0.0.1:8000/photos/img1.jpg,img2.jpg,img3.jpg")
+  // Gestion des images secondaires
   const baseUrl = "http://127.0.0.1:8000/uploads/";
-
   const secondaryImages = oeuvre.images_secondaires
     ? oeuvre.images_secondaires
         .split(/\r?\n|,/) // split par retour ligne ou virgule
@@ -35,164 +37,231 @@ const OeuvreDetails = () => {
         )
     : [];
 
+  // Split title for color styling
+  const [titre1, ...titreRest] = oeuvre.titre ? oeuvre.titre.split(' ') : [''];
+  const titre2 = titreRest.join(' ');
 
   return (
-    <div className="container mx-auto px-4 py-16 font-serif text-gray-800">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-
-        {/* Lightbox avec animation */}
-        <AnimatePresence>
-          {zoomedImage && (
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/70"
-              onClick={() => setZoomedImage(null)}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <motion.img
-                src={zoomedImage}
-                alt="Zoom"
-                initial={{ scale: 0.7 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.7 }}
-                transition={{ duration: 0.3 }}
-                className="max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Galerie */}
-        <motion.div
-          className="border-4 border-gray-200 rounded-3xl overflow-hidden shadow-xl cursor-zoom-in"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+    <div className="min-h-screen bg-[#FFFFFF]">
+      {/* Header section with main image and overlay */}
+      <div className="relative w-full h-[28rem] sm:h-[32rem] lg:h-[40rem] overflow-hidden shadow-md">
+        <img
+          src={imagePrincipale || '/placeholder-artwork.jpg'}
+          alt={oeuvre.titre}
+          className="absolute inset-0 w-full h-full object-contain object-center"
+          loading="eager"
+        />
+        <div className="absolute inset-0" style={{background: 'linear-gradient(to top, #0C0C0C 80%, #0C0C0C99 40%, transparent 100%)'}}></div>
+        {/* Back button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-6 left-6 z-20 bg-[#FFFFFF] text-[#0C0C0C] p-2 rounded-full shadow-md hover:bg-[#FFFFFF] transition border border-[#0C0C0C]"
         >
-          <img
-            src={imagePrincipale}
-            alt={oeuvre.titre}
-            className="w-full h-[450px] object-container hover:scale-105 transition-transform duration-300 ease-in-out"
-            onClick={() => setZoomedImage(imagePrincipale)}
-          />
-        </motion.div>
-
-        {/* Infos */}
-        <motion.div
-          className="space-y-4"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <h1 className="text-4xl font-bold text-indigo-800">{oeuvre.titre}</h1>
-          <p className="text-lg italic text-gray-600">{oeuvre.description}</p>
-
-          <div className="grid grid-cols-2 gap-4 text-sm text-gray-700">
-            <p><span className="font-semibold">Dimensions:</span> {oeuvre.dimensions}</p>
-            <p><span className="font-semibold">Technique:</span> {oeuvre.technique}</p>
-            <p><span className="font-semibold">Remarque:</span> {oeuvre.remarque}</p>
-            <p>
-              
-              {oeuvre.stock > 0 ? (
-                <>
-                  <span className="font-semibold">Stock:</span>
-                  <span className="text-green-700 ml-2">{oeuvre.stock} disponible(s)</span>
-                </>      
-              ) : (
-                <span className="text-red-600 hidden">Indisponible</span>
-              )}
-            </p>
-          </div>
-
-          {/* Boutons */}
-          <div className="flex gap-4 mt-8">
-            <button
-              onClick={() => {
-                const formSection = document.getElementById("contact-form");
-                if (formSection) formSection.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-full shadow hover:bg-indigo-700 transition duration-300"
-            >
-              Se renseigner
-            </button>
-
-            <button
-              disabled={oeuvre.stock <= 0}
-              className={`px-6 py-2 rounded-full shadow transition duration-300 ${
-                oeuvre.stock > 0
-                  ? "bg-green-600 hover:bg-green-700 text-white"
-                  : "bg-gray-400 text-white cursor-not-allowed"
-              }`}
-            >
-              Acheter
-            </button>
-          </div>
-        </motion.div>
+          <svg width="20" height="20" fill="none" stroke="#0C0C0C" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        {/* Title overlay */}
+        <div className="relative z-10 h-full flex flex-col justify-end px-6 sm:px-10 pb-10">
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h1 className="text-[2.5rem] md:text-[3.5rem] lg:text-[4rem] uppercase mb-3 flex flex-wrap items-center gap-2 text-center" style={{ fontFamily: 'Kenyan Coffee, sans-serif', color: '#FFFFFF' }}>
+              {titre1}
+              <span className="" style={{ color: '#972924' }}>{titre2}</span>
+            </h1>
+          </motion.div>
+        </div>
       </div>
 
-      {/* Miniatures */}
-      {secondaryImages.length > 0 && (
-        <div className="flex gap-3 mt-5 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-indigo-300">
-          {[oeuvre.image_principale, ...secondaryImages].map((img, index) => (
-            <img
-              key={index}
-              src={img}
-              alt={`Miniature ${index}`}
-              onClick={() => setImagePrincipale(img)}
-              className={`w-20 h-20 object-container border-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 ${
-                imagePrincipale === img ? 'border-indigo-600 scale-105' : 'border-gray-300 hover:scale-105'
-              }`}
-            />
-          ))}
+      {/* Section: Galerie miniatures + Lightbox */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row gap-10">
+          {/* Lightbox avec animation */}
+          <AnimatePresence>
+            {zoomedImage && (
+              <motion.div
+                className="fixed inset-0 z-50 flex items-center justify-center" style={{background: '#0C0C0Ccc'}}
+                onClick={() => setZoomedImage(null)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <motion.img
+                  src={zoomedImage}
+                  alt="Zoom"
+                  initial={{ scale: 0.7 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0.7 }}
+                  transition={{ duration: 0.3 }}
+                  className="max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl bg-[#FFFFFF]"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Main image and miniatures */}
+          <div className="flex flex-col gap-4 md:w-1/2">
+            <motion.div
+              className="border-4 border-[#0C0C0C] rounded-3xl overflow-hidden shadow-xl cursor-zoom-in bg-[#FFFFFF]"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <img
+                src={imagePrincipale || '/placeholder-artwork.jpg'}
+                alt={oeuvre.titre}
+                className="w-full h-[450px] object-contain hover:scale-105 transition-transform duration-300 ease-in-out bg-[#FFFFFF]"
+                onClick={() => setZoomedImage(imagePrincipale)}
+              />
+            </motion.div>
+            {secondaryImages.length > 0 && (
+              <div className="flex gap-3 mt-2 overflow-x-auto overflow-y-hidden">
+                {[oeuvre.image_principale, ...secondaryImages].map((img, index) => (
+                  <img
+                    key={index}
+                    src={img}
+                    alt={`Miniature ${index}`}
+                    onClick={() => setImagePrincipale(img)}
+                    className={`w-20 h-20 object-contain border-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 ${
+                      imagePrincipale === img ? 'border-[#972924] scale-105' : 'border-[#0C0C0C] hover:scale-105'
+                    } bg-[#FFFFFF]`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Infos section */}
+          <motion.div
+            className="flex-1 space-y-8"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            {/* Section header */}
+            <div className="flex items-center mb-4">
+              <img src={circle} alt="circle icon" className="w-8 h-8 mr-2" />
+              <h2 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] uppercase" style={{ fontFamily: 'Kenyan Coffee, sans-serif', color: '#0C0C0C' }}>
+                Détails de l'œuvre
+              </h2>
+            </div>
+            <p className="text-lg italic mb-2" style={{ color: '#0C0C0C' }}>{oeuvre.description}</p>
+            <div className="grid grid-cols-2 gap-4 text-sm" style={{ color: '#0C0C0C' }}>
+              <p><span className="font-semibold">Dimensions:</span> {oeuvre.dimensions}</p>
+              <p><span className="font-semibold">Technique:</span> {oeuvre.technique}</p>
+              <p><span className="font-semibold">Remarque:</span> {oeuvre.remarque}</p>
+              <p>
+                {oeuvre.stock > 0 ? (
+                  <>
+                    <span className="font-semibold">Stock:</span>
+                    <span className="ml-2" style={{ color: '#972924' }}>{oeuvre.stock} disponible(s)</span>
+                  </>
+                ) : (
+                  <span style={{ color: '#972924' }}>Indisponible</span>
+                )}
+              </p>
+            </div>
+            {/* Artiste et exposition */}
+            <div className="mt-6 flex flex-col gap-2">
+              {oeuvre.artiste && (
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold" style={{ color: '#972924' }}>Artiste :</span>
+                  <Link to={`/artistes/${oeuvre.artiste.id}`} className="font-bold hover:underline" style={{ color: '#0C0C0C' }}>
+                    {oeuvre.artiste.nom}
+                  </Link>
+                </div>
+              )}
+              {oeuvre.exposition && (
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold" style={{ color: '#972924' }}>Exposition :</span>
+                  <Link to={`/expositions/${oeuvre.exposition.id}`} className="font-bold hover:underline" style={{ color: '#0C0C0C' }}>
+                    {oeuvre.exposition.titre}
+                  </Link>
+                </div>
+              )}
+            </div>
+            {/* Boutons */}
+            <div className="flex gap-4 mt-8">
+              <button
+                onClick={() => {
+                  const formSection = document.getElementById("contact-form");
+                  if (formSection) formSection.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="px-6 py-2 rounded-full shadow font-bold transition duration-300"
+                style={{ background: '#972924', color: '#FFFFFF', border: '1px solid #0C0C0C' }}
+              >
+                Se renseigner
+              </button>
+              <button
+                disabled={oeuvre.stock <= 0}
+                className={`px-6 py-2 rounded-full shadow font-bold transition duration-300 ${
+                  oeuvre.stock > 0
+                    ? ''
+                    : 'cursor-not-allowed opacity-60'
+                }`}
+                style={{ background: oeuvre.stock > 0 ? '#0C0C0C' : '#FFFFFF', color: oeuvre.stock > 0 ? '#FFFFFF' : '#972924', border: '1px solid #972924' }}
+              >
+                Acheter
+              </button>
+            </div>
+          </motion.div>
         </div>
-      )}
+      </div>
+
+      {/* Medias section (if available) */}
+      {oeuvre.medias && oeuvre.medias.length > 0 && <Medias medias={oeuvre.medias} />}
 
       {/* Formulaire contact */}
       <motion.div
         id="contact-form"
-        className="mt-20 bg-white p-10 rounded-3xl shadow-2xl border border-indigo-100"
+        className="mt-20 p-10 rounded-3xl shadow-2xl border max-w-3xl mx-auto"
+        style={{ background: '#FFFFFF', borderColor: '#972924' }}
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.2 }}
       >
-        <h2 className="text-2xl font-bold mb-6 text-indigo-800">Formulaire de renseignement</h2>
+        <h2 className="text-2xl font-bold mb-6" style={{ color: '#972924' }}>Formulaire de renseignement</h2>
         <form className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
           <input
             type="text"
             placeholder="Votre nom"
-            className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="p-3 rounded-xl focus:outline-none focus:ring-2"
+            style={{ border: '1px solid #0C0C0C', color: '#0C0C0C', background: '#FFFFFF' }}
             required
           />
           <input
             type="email"
             placeholder="Votre email"
-            className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="p-3 rounded-xl focus:outline-none focus:ring-2"
+            style={{ border: '1px solid #0C0C0C', color: '#0C0C0C', background: '#FFFFFF' }}
             required
           />
           <input
             type="tel"
             placeholder="Votre numéro de tel (facultatif)"
-            className="p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="p-3 rounded-xl focus:outline-none focus:ring-2"
+            style={{ border: '1px solid #0C0C0C', color: '#0C0C0C', background: '#FFFFFF' }}
           />
           <textarea
             placeholder="Votre message"
-            className="p-3 border rounded-xl md:col-span-3 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="p-3 rounded-xl md:col-span-3 focus:outline-none focus:ring-2"
             rows="5"
+            style={{ border: '1px solid #0C0C0C', color: '#0C0C0C', background: '#FFFFFF' }}
             required
           />
           <button
             type="submit"
-            className="bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition md:col-span-3"
+            className="px-6 py-2 rounded-full font-bold transition md:col-span-3"
+            style={{ background: '#972924', color: '#FFFFFF', border: '1px solid #0C0C0C' }}
           >
             Envoyer ma demande
           </button>
         </form>
       </motion.div>
     </div>
-
   );
 };
 
