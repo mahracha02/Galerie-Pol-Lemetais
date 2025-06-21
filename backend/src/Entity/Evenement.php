@@ -61,11 +61,18 @@ class Evenement
     #[ORM\OneToMany(targetEntity: Medias::class, mappedBy: 'evenement')]
     private Collection $medias;
 
+    /**
+     * @var Collection<int, Oeuvre>
+     */
+    #[ORM\ManyToMany(targetEntity: Oeuvre::class, mappedBy: 'evenement')]
+    private Collection $oeuvres;
+
     public function __construct()
     {
         $this->artists = new ArrayCollection();
         $this->actualites = new ArrayCollection();
         $this->medias = new ArrayCollection();
+        $this->oeuvres = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -260,6 +267,33 @@ class Evenement
             if ($media->getEvenement() === $this) {
                 $media->setEvenement(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Oeuvre>
+     */
+    public function getOeuvres(): Collection
+    {
+        return $this->oeuvres;
+    }
+
+    public function addOeuvre(Oeuvre $oeuvre): static
+    {
+        if (!$this->oeuvres->contains($oeuvre)) {
+            $this->oeuvres->add($oeuvre);
+            $oeuvre->addEvenement($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOeuvre(Oeuvre $oeuvre): static
+    {
+        if ($this->oeuvres->removeElement($oeuvre)) {
+            $oeuvre->removeEvenement($this);
         }
 
         return $this;

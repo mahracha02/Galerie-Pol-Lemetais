@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import circle from '../assets/photos/icons/circle.png';
 import loupe from '../assets/photos/icons/loupe.png';
-import map from '../assets/photos/icons/map.png';
 import { Link } from 'react-router-dom';
 
 const Artistes = () => {
@@ -91,13 +90,8 @@ const Artistes = () => {
 
           {/* Filtre par pays */}
           <div className="relative w-full md:max-w-xs">
-            <img 
-              src={map} 
-              alt="map icon" 
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 ml-6" 
-            />
             <select
-              className="pl-16 pr-4 py-4 border-2 border-[#000000] w-full text-[1rem] appearance-none bg-white focus:border-[#972924] focus:outline-none transition-colors duration-300 cursor-pointer"
+              className="px-4 pr-4 py-4 border-2 border-[#000000] w-full text-[1rem] appearance-none bg-white focus:border-[#972924] focus:outline-none transition-colors duration-300 cursor-pointer"
               style={{ 
                 fontFamily: 'Poppins Regular, sans-serif',
                 borderRadius: '0'
@@ -180,28 +174,29 @@ const Artistes = () => {
                   Aucun artiste trouvé.
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                   {filteredArtists.map((artist) => (
                     <motion.div 
                       key={artist.id} 
-                      className="group relative bg-[#000000] overflow-hidden shadow-md h-[20rem] md:h-[35rem] flex flex-col"
+                      className="group relative bg-[#000000] overflow-hidden shadow-md h-[18rem] sm:h-[18rem] md:h-[20rem] lg:h-[25rem] flex flex-col"
                       whileHover={{ scale: 1.02 }}
                       transition={{ duration: 0.3 }}
                     >
                       <Link to={`/artistes/${artist.id}`} className="absolute inset-0 z-10">
-                        <div className="h-[12rem] md:h-[26rem] overflow-hidden">
+                        <div className="h-[12rem] sm:h-[12rem] md:h-[14rem] lg:h-[16rem] overflow-hidden flex items-center justify-center bg-[#000000] p-2">
                           <img 
                             src={artist.photo} 
                             alt={artist.nom} 
-                            className="w-full h-full object-cover group-hover:opacity-80 transition duration-300"
+                            className="object-contain max-h-full max-w-full"
+                            style={{ aspectRatio: 'auto' }}
                           />
                         </div>
-                        <div className="p-4 text-left relative mt-2 ml-2">
-                          <h3 className="text-xl md:text-2xl lg:text-[2.5rem] text-[#FFFFFF] uppercase break-words max-w-[70%]" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
-                            {artist.nom.split(' ')[0]} 
-                            <span className='text-[#972924] ml-2'>{artist.nom.split(' ').slice(1).join(' ')}</span>
+                        <div className="p-2 md:p-3 text-left relative mt-1 ml-1">
+                          <h3 className="text-[1.25rem] md:text-[1.5rem] lg:text-[1.75rem] text-[#FFFFFF] uppercase break-words max-w-[70%] flex flex-col" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
+                            <span>{artist.nom.split(' ')[0]}</span>
+                            <span className='text-[#972924]'>{artist.nom.split(' ').slice(1).join(' ')}</span>
                           </h3>
-                          <p className="text-[#FFFFFF] text-[1.5rem] border-2 border-[#FFFFFF] px-2 uppercase absolute top-5 right-5" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>
+                          <p className="text-[#FFFFFF] text-xs sm:text-sm md:text-base border-2 border-[#FFFFFF] px-1 md:px-2 uppercase absolute top-2 right-2 md:top-3 md:right-3" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>
                             <b>{artist.pays}</b>
                           </p>
                         </div>

@@ -1,530 +1,379 @@
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ListBulletIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
-import { Link, useNavigate } from 'react-router-dom';
-import expo100taur from '../assets/photos/expo100TAUR.jpg';
-import expoBruno from '../assets/photos/expoBruno.jpg';
-import expoPaulAmar from '../assets/photos/expo_paul_amar.jpg';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import loupe from '../assets/photos/icons/loupe.png';
+import calendar from '../assets/photos/icons/calendar.png';
+import circle from '../assets/photos/icons/circle.png';
 
 const Expositions = () => {
   const [expositions, setExpositions] = useState([]);
+  const [filteredExpositions, setFilteredExpositions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('grid');
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
+  const [selectedYear, setSelectedYear] = useState('Tous');
+  const [years, setYears] = useState([]);
+  const [displayedYears, setDisplayedYears] = useState(2);
+  const [showVirtualTour, setShowVirtualTour] = useState(false);
   const [selectedExpo, setSelectedExpo] = useState(null);
-  const [filterDate, setFilterDate] = useState('all');
-  const navigate = useNavigate();
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { 
-        type: "spring",
-        stiffness: 100
-      }
-    }
-  };
-
-  const toggleViewMode = () => {
-    setViewMode(viewMode === 'grid' ? 'list' : 'grid');
-  };
 
   useEffect(() => {
-    fetch("/expositions/api/published", {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-        },
-    })
-    .then(response => response.json())
-    .then(data => setExpositions(data))
-    .then(() => setLoading(false))
-    .catch(error => console.error("Erreur lors de la récupération des expositions :", error));
-} 
-, []);
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/expositions/api/published');
+        if (!response.ok) throw new Error('Erreur HTTP!');
+        const data = await response.json();
+        const sortedExpos = data.sort((a, b) => new Date(b.date_debut) - new Date(a.date_debut));
+        setExpositions(sortedExpos);
+        setFilteredExpositions(sortedExpos);
+        const uniqueYears = [...new Set(sortedExpos.map(expo => extractYear(expo.date_debut)))]
+          .filter(year => year !== null)
+          .sort((a, b) => b - a);
+        setYears(uniqueYears);
+        setDisplayedYears(uniqueYears.length);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-  const expandExpo = (id) => {
-    setSelectedExpo(selectedExpo === id ? null : id);
-  };
-
-  const mois = {
-    janvier: '01',
-    février: '02',
-    fevrier: '02',
-    mars: '03',
-    avril: '04',
-    mai: '05',
-    juin: '06',
-    juillet: '07',
-    août: '08',
-    aout: '08',
-    septembre: '09',
-    octobre: '10',
-    novembre: '11',
-    décembre: '12',
-    decembre: '12',
-  };
-  
-  const parseDateFr = (dateStr) => {
-    const parts = dateStr.toLowerCase().split(' ');
-    if (parts.length !== 3) return null;
-    const jour = parts[0].padStart(2, '0');
-    const moisNum = mois[parts[1]];
-    const annee = parts[2];
-    if (!moisNum) return null;
-    return new Date(`${annee}-${moisNum}-${jour}T00:00:00`);
-  };
-   
-  const filteredExpositions = expositions.filter(expo => {
-    if (filterDate === 'all') return true;
-  
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-  
-    const startDate = parseDateFr(expo.date_debut);
-    const endDate = parseDateFr(expo.date_fin);
-  
-    if (!startDate || !endDate) return false;
-  
-    if (filterDate === 'current') {
-      return currentDate >= startDate && currentDate <= endDate;
-    } else if (filterDate === 'upcoming') {
-      return currentDate < startDate;
-    } else if (filterDate === 'past') {
-      return currentDate > endDate;
+  useEffect(() => {
+    let result = expositions;
+    if (search) {
+      result = result.filter(expo =>
+        expo.titre.toLowerCase().includes(search.toLowerCase())
+      );
     }
-  
-    return true;
-  });
-  
-
-  const scrollToExpositions = (e) => {
-    e.preventDefault();
-    const expositionsSection = document.getElementById('expositions');
-    if (expositionsSection) {
-      expositionsSection.scrollIntoView({ behavior: 'smooth' });
+    if (selectedYear !== 'Tous') {
+      result = result.filter(expo =>
+        extractYear(expo.date_debut)?.toString() === selectedYear
+      );
     }
+    setFilteredExpositions(result);
+  }, [search, selectedYear, expositions]);
+
+  const groupedExpos = filteredExpositions.reduce((acc, expo) => {
+    const year = extractYear(expo.date_debut);
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(expo);
+    return acc;
+  }, {});
+
+  function extractYear(dateString) {
+    if (!dateString) return null;
+    const d = new Date(dateString);
+    if (!isNaN(d.getFullYear())) return d.getFullYear();
+    const match = dateString.match(/\b(19|20)\d{2}\b/);
+    return match ? parseInt(match[0], 10) : null;
+  }
+
+  const formatDateShort = (dateString) => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+      });
+    }
+    return 'Date invalide';
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <motion.div 
-          className="text-2xl font-bold text-indigo-600"
-          animate={{ 
-            scale: [1, 1.2, 1],
-            rotate: [0, 5, -5, 0]
-          }}
-          transition={{ 
-            duration: 1.5, 
-            repeat: Infinity,
-            ease: "easeInOut" 
-          }}
-        >
-          Chargement des expositions...
-        </motion.div>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center text-xl">Chargement des expositions...</div>;
+  }
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-xl text-red-600">{error}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50">
-      <section className="relative overflow-hidden bg-white mb-6">
-        <div className="pt-16 pb-80 sm:pt-24 sm:pb-40 lg:pt-40 lg:pb-48">
-          <div className="relative mx-auto max-w-7xl px-4 sm:static sm:px-6 lg:px-8">
-            <div className="sm:max-w-lg">
-              <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">Nos expositions 2025</h1>
-              <p className="mt-4 text-xl text-gray-500">Découvrez nos expositions en cours et prochaines.</p>
-            </div>
-            <div>
-              <div className="mt-10">
-                <div aria-hidden="true" className="pointer-events-none lg:absolute lg:inset-y-0 lg:mx-auto lg:w-full lg:max-w-7xl">
-                  <div className="absolute transform sm:top-0 sm:left-1/2 sm:translate-x-8 lg:top-1/2 lg:left-1/2 lg:-translate-y-1/2 lg:translate-x-8">
-                    <div className="flex items-center space-x-6 lg:space-x-8">
-                      <div className="grid shrink-0 grid-cols-1 gap-y-6 lg:gap-y-8">
-                        <div className="h-64 w-44 overflow-hidden rounded-lg sm:opacity-0 lg:opacity-100">
-                          <img src={expo100taur} alt="" className="size-full object-cover" />
-                        </div>
-                        <div className="h-64 w-44 overflow-hidden rounded-lg">
-                          <img src={expoBruno} alt="" className="size-full object-cover" />
-                        </div>
-                      </div>
-                      <div className="grid shrink-0 grid-cols-1 gap-y-6 lg:gap-y-8">
-                        <div className="h-64 w-44 overflow-hidden rounded-lg">
-                          <img src={expo100taur} alt="" className="size-full object-cover" />
-                        </div>
-                        <div className="h-64 w-44 overflow-hidden rounded-lg">
-                          <img src={expoPaulAmar} alt="" className="size-full object-cover" />
-                        </div>
-                        <div className="h-64 w-44 overflow-hidden rounded-lg">
-                          <img src={expoBruno} alt="" className="size-full object-cover" />
-                        </div>
-                      </div>
-                      <div className="grid shrink-0 grid-cols-1 gap-y-6 lg:gap-y-8">
-                        <div className="h-64 w-44 overflow-hidden rounded-lg">
-                          <img src={expo100taur} alt="" className="size-full object-cover" />
-                        </div>
-                        <div className="h-64 w-44 overflow-hidden rounded-lg">
-                          <img src={expoBruno} alt="" className="size-full object-cover" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <Link 
-                  to="#expositions" 
-                  onClick={scrollToExpositions}
-                  className="inline-block rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-center font-medium text-white hover:bg-indigo-700"
-                >
-                  Voir toutes les expositions
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>   
-      </section>
-
-      {/* Expositions Section */}
-      <section id="expositions" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-12">
-          <motion.h2 
-            className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-0"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+    <div className="min-h-screen bg-gray-50">
+      <main className="container mx-auto px-4 py-12">
+        <div className="flex items-center mb-8">
+          <img src={circle} alt="circle icon" className="w-12 h-12 mr-2" />
+          <h2 className="text-2xl md:text-[4rem] text-[#000000] uppercase" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
             Nos Expositions
-          </motion.h2>
-          
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Filtre par date */}
-            <motion.div 
-              className="relative"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+          </h2>
+        </div>
+        {/* Filtres en ligne */}
+        <div className="flex flex-col md:flex-row gap-12 mb-12 text-left">
+          {/* Barre de recherche */}
+          <div className="relative w-full md:max-w-md">
+            <img 
+              src={loupe} 
+              alt="loupe icon" 
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 ml-6" 
+            />
+            <input
+              type="text"
+              placeholder="Rechercher par nom..."
+              className="pl-16 pr-4 py-4 border-2 border-[#000000] w-full text-[1rem] focus:border-[#972924] focus:outline-none transition-colors duration-300"
+              style={{ fontFamily: 'Poppins Regular, sans-serif' }}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          {/* Filtre par année */}
+          <div className="relative w-full md:max-w-xs">
+            <img 
+              src={calendar} 
+              alt="calendar icon" 
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 ml-6" 
+            />
+            <select
+              className="pl-16 pr-4 py-4 border-2 border-[#000000] w-full text-[1rem] appearance-none bg-white focus:border-[#972924] focus:outline-none transition-colors duration-300 cursor-pointer"
+              style={{ fontFamily: 'Poppins Regular, sans-serif', borderRadius: '0' }}
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
             >
-              <select
-                className="bg-white border border-gray-300 rounded-lg px-4 py-2 appearance-none w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-              >
-                <option value="all">Toutes les expositions</option>
-                <option value="current">En cours</option>
-                <option value="upcoming">À venir</option>
-                <option value="past">Passées</option>
-              </select>
-            </motion.div>
-            
-            {/* Bouton changement de vue */}
-            <motion.button
-              onClick={toggleViewMode}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              {viewMode === 'grid' ? (
-                <>
-                  <ListBulletIcon className="w-5 h-5" />
-                  <span>Vue Liste</span>
-                </>
-              ) : (
-                <>
-                  <Squares2X2Icon className="w-5 h-5" />
-                  <span>Vue Cartes</span>
-                </>
-              )}
-            </motion.button>
+              <option value="Tous" style={{ fontFamily: 'Poppins Regular, sans-serif', padding: '1rem' }}>Trier par année</option>
+              {years.map((year) => (
+                <option 
+                  key={year} 
+                  value={year}
+                  style={{ fontFamily: 'Poppins Regular, sans-serif', padding: '1rem', backgroundColor: 'white', fontSize: '1rem' }}
+                >
+                  {year}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <svg className="w-4 h-4 text-[#000000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
         </div>
-
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={viewMode}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            {viewMode === 'grid' ? (
-              // Vue Cartes (Grid)
-              <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {filteredExpositions.map((expo) => (
-                <Link 
-                  key={expo.id}
-                  to={`/expositions/${expo.id}`}
-                  className="block" // Important for proper link behavior
-                >
-                  <motion.div
-                    className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer"
-                    variants={itemVariants}
-                    whileHover={{ 
-                      y: -5,
-                      scale: 1.03 
-                    }}
-                    style={{ height: "100%" }} // Ensures all cards have same height
-                  >
-                    <div className="relative h-64 overflow-hidden">
-                      <motion.img
-                        src={expo.image}
-                        alt={expo.titre}
-                        className="w-full h-full object-contain bg-gray-100"
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ duration: 0.5 }}
-                        style={{
-                          objectPosition: 'center',
-                          objectFit: 'contain',
-                          padding: '0.5rem'
-                        }}
-                      />
-                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
-                      <div className="absolute bottom-0 left-0 p-4 text-white">
-                        <span className="inline-block px-3 py-1 text-xs font-semibold bg-indigo-600 rounded-full mb-2">
-                          {expo.artiste}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">{expo.titre}</h3>
-                      <p className="text-gray-600 mb-4 line-clamp-2">{expo.description}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-indigo-600">
-                          {expo.date_debut} - {expo.date_fin}
-                        </span>
-                      </div>
-                      
-                      {/* Always visible artist section */}
-                      <div className="mt-4">
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {expo.tags?.map((tag, index) => (
-                            <span key={index} className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                              #{tag}
-                            </span>
-                          ))}
-                        </div>
-            
-                        {/* Artistes associés */}
-                        <div className="mb-4">
-                          <h4 className="text-lg font-semibold mb-2 text-indigo-700">Artistes participants</h4>
-                          <div className="flex flex-wrap gap-4">
-                            {/* Afficher l'artiste principal avec un badge */}
-                            {expo.artiste_principal && (
-                              <motion.div
-                                key={expo.artiste_principal.id}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="w-32 p-2 rounded-xl shadow-md bg-white text-center hover:bg-indigo-50 transition-colors"
-                              >
-                                <Link to={`/artistes/${expo.artiste_principal.id}`}>
-                                  <div className="relative w-20 h-20 mx-auto mb-2 group">
-                                    <img
-                                      src={expo.artiste_principal.photo || 'photos/logo.jpg'}
-                                      alt={expo.artiste_principal.nom}
-                                      className="w-full h-full object-cover rounded-full border-3 border-indigo-500 shadow-md group-hover:shadow-indigo-400 transition-shadow duration-300"
-                                    />
-                                    <div className="absolute inset-0 rounded-full bg-indigo-500 opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
-                                    {/* Badge unique pour l'artiste principal */}
-                                    <span className="absolute top-0 right-0 bg-indigo-600 text-white text-xs rounded-full py-1 px-2">Principal</span>
-                                  </div>
-                                  <p className="text-sm font-semibold text-gray-800">{expo.artiste_principal.nom}</p>
-                                </Link>
-                              </motion.div>
-                            )}
-
-                            {/* Afficher les autres artistes */}
-                            {expo.artistes && expo.artistes.length > 0 && expo.artistes.map((artiste) => (
-                              <motion.div
-                                key={artiste.id}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="w-32 p-2 rounded-xl shadow-md bg-white text-center hover:bg-indigo-50 transition-colors"
-                              >
-                                <Link to={`/artistes/${artiste.id}`}>
-                                  <div className="relative w-20 h-20 mx-auto mb-2">
-                                    <img
-                                      src={artiste.photo}
-                                      alt={artiste.nom}
-                                      className="w-full h-full object-cover rounded-full border-3 border-indigo-500 shadow-md hover:shadow-indigo-300 transition-shadow duration-300"
-                                    />
-                                    <div className="absolute inset-0 rounded-full bg-black/10 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                                  </div>
-                                  <p className="text-sm font-semibold text-gray-800">{artiste.nom}</p>
-                                </Link>
-                              </motion.div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                </Link>
-              ))}
-            </motion.div>
-            ) : (
-              // Vue Liste
-              <motion.div
-                className="flex flex-col gap-6"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-              >
-                {filteredExpositions.map((expo) => (
-                  <motion.div
-                    key={expo.id}
-                    className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300"
-                    variants={itemVariants}
-                  >
-                    <div className="flex flex-col md:flex-row">
-                      <div className="w-full md:w-1/3 h-110 md:h-110 relative">
-                        <motion.img
-                          src={expo.image}
+        <div className="space-y-12  md:px-4 lg:px-8">
+          {Object.keys(groupedExpos)
+            .sort((a, b) => b - a)
+            .slice(0, displayedYears)
+            .map((year) => (
+              <div key={year} className="space-y-8 relative ">
+                <div className="flex items-center">
+                  <div className="flex flex-col items-center mr-8">
+                    <div className="w-3 h-3 bg-[#000000] rounded-full"></div>
+                    <div className="absolute top-[4.5rem] left-[0.375rem] w-0.5 bg-[#000000]" style={{ height: 'calc(100% - 4.5rem)' }}></div>
+                  </div>
+                  <h2 className="text-2xl md:text-4xl text-[#000000]" style={{ fontFamily: 'Poppins ExtraLight, sans-serif' }}>
+                    {year}
+                  </h2>
+                </div>
+                <div className=" md:px-2 lg:px-8 ml-4 space-y-8 md:space-y-12 lg:space-y-16">
+                  {groupedExpos[year].map((expo, idx) => (
+                    <motion.div
+                      key={expo.id}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: idx * 0.1 }}
+                      whileHover={{ scale: 1.02 }}
+                      className="flex flex-row border border-3 border-[#972924] overflow-hidden bg-white h-[18rem] md:h-[24rem] lg:h-[26rem] "
+                    >
+                      {/* Image */}
+                      <div className="w-2/5  h-full flex-shrink-0 flex items-center justify-center bg-gray-100 p-4">
+                        <img
+                          src={expo.image || '/placeholder-event.jpg'}
                           alt={expo.titre}
-                          className="w-full h-full object-contain bg-gray-100"
-                          whileHover={{ scale: 1.05 }}
-                          transition={{ duration: 0.5 }}
-                          style={{
-                            objectPosition: 'center',
-                            objectFit: 'contain',
-                            padding: '0.5rem'
-                          }}
+                          className="object-contain max-h-full max-w-full"
+                          style={{ aspectRatio: 'auto' }}
                         />
                       </div>
-                      <div className="w-full md:w-2/3 p-6 md:p-8">
-                        <div className="flex flex-col h-full">
-                          <div>
-                            <div className="flex flex-wrap gap-2 mb-3">
-                              <span className="inline-block px-3 py-1 text-xs font-semibold bg-indigo-600 text-white rounded-full">
-                                {expo.artiste}
+                      {/* Info */}
+                      <div className="w-3/5 flex flex-col justify-between p-1 md:p-6 lg:p-8 bg-white">
+                        <div>
+                          <img src={circle} alt="circle icon" className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 lg:mb-2" />
+                          {/* Top part: Title/Artist and Dates */}
+                          <div className="flex justify-between items-start">
+                            {/* Left: title, artist */}
+                            <div className="w-2/3">
+                              <span className="uppercase text-[1.25rem] md:text-[1.5rem] lg:text-[2rem]" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
+                                {expo.titre.split(' ').slice(0, -1).join(' ')}{' '}
+                                <span className="text-[#972924]">{expo.titre.split(' ').slice(-1)}</span>
                               </span>
-                              {expo.tags?.slice(0, 2).map((tag, index) => (
-                                <span key={index} className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                                  #{tag}
-                                </span>
-                              ))}
+                              <Link to={`/artistes/${expo.artiste_principal.id}`} className="uppercase text-[1rem] md:text-[1.5rem] lg:text-[1.75rem] mt-1 block hover:text-[#972924] hover:underline" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
+                                {expo.artiste_principal.nom}
+                              </Link>
                             </div>
-                            <h3 className="text-2xl font-bold text-gray-900 mb-3">{expo.titre}</h3>
-                            <p className="text-gray-600 mb-4">{expo.description}</p>
-                          </div>
-                          
-                          <div className="mt-auto flex flex-wrap justify-between items-center">
-                            <div className="text-sm font-medium text-indigo-600 mb-3 md:mb-0">
-                              <span className="inline-flex items-center">
-                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                {expo.date_debut} - {expo.date_fin}
-                              </span>
-                            </div>
-                            
-                            <Link
-                              key={expo.id}
-                              to={`/expositions/${expo.id}`}
-                              className="inline-block w-full text-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors w-1/2 md:w-auto"
-                              whileHover={{ scale: 1.05 }}
-                            >
-                              Voir les détails
-                            </Link>
-                          </div>
-
-                          {/* Artistes associés */}
-                          {(expo.artiste_principal || (expo.artistes && expo.artistes.length > 0)) && (
-                            <div className="mt-6 border-t pt-4">
-                              <h4 className="text-lg font-semibold mb-4 text-indigo-700">Artistes participants</h4>
-                              <div className="flex flex-wrap gap-4">
-                                
-                                {/* Artiste principal */}
-                                {expo.artiste_principal && (
-                                  <motion.div
-                                    key={expo.artiste_principal.id}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="w-32 p-2 rounded-xl shadow-md bg-white text-center hover:bg-indigo-50 transition-colors"
-                                  >
-                                    <Link to={`/artistes/${expo.artiste_principal.id}`}>
-                                      <div className="relative w-20 h-20 mx-auto mb-2 group">
-                                        <img
-                                          src={expo.artiste_principal.photo || 'photos/logo.jpg'}
-                                          alt={expo.artiste_principal.nom}
-                                          className="w-full h-full object-cover rounded-full border-4 border-indigo-500 shadow-md group-hover:shadow-indigo-400 transition-shadow duration-300"
-                                        />
-                                        <div className="absolute inset-0 rounded-full bg-indigo-500 opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
-                                        <span className="absolute top-0 right-0 bg-indigo-600 text-white text-xs rounded-full py-1 px-2">Principal</span>
-                                      </div>
-                                      <p className="text-sm font-semibold text-gray-800">{expo.artiste_principal.nom}</p>
-                                    </Link>
-                                  </motion.div>
-                                )}
-
-                                {/* Autres artistes */}
-                                {expo.artistes?.map((artiste) => (
-                                  <motion.div
-                                    key={artiste.id}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="w-32 p-2 rounded-xl shadow-md bg-white text-center hover:bg-indigo-50 transition-colors"
-                                  >
-                                    <Link to={`/artistes/${artiste.id}`}>
-                                      <div className="relative w-20 h-20 mx-auto mb-2 group">
-                                        <img
-                                          src={artiste.photo}
-                                          alt={artiste.nom}
-                                          className="w-full h-full object-cover rounded-full border-3 border-gray-300 shadow-md group-hover:shadow-gray-400 transition-shadow duration-300"
-                                        />
-                                        <div className="absolute inset-0 rounded-full bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                      </div>
-                                      <p className="text-sm font-semibold text-gray-800">{artiste.nom}</p>
-                                    </Link>
-                                  </motion.div>
-                                ))}
+                            {/* Right: Dates */}
+                            <div className="w-1/3 text-right text-black text-[0.6rem] md:text-[0.9rem] lg:text-[1rem]" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>
+                              <div className="hidden md:block">Du {formatDateShort(expo.date_debut)} au {formatDateShort(expo.date_fin)}</div>
+                              <div className="block md:hidden">
+                                <div>Du {formatDateShort(expo.date_debut)}</div>
+                                <div>au {formatDateShort(expo.date_fin)}</div>
                               </div>
                             </div>
-                          )}
                           </div>
+                          {/* Description */}
+                          <p className="line-clamp-2 text-[0.8rem] md:text-[1rem] lg:text-[1.1rem] text-black mt-2 md:mt-4" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>
+                            {expo.description}
+                          </p>
+                          {/* Autres artistes */}
+                          {expo.artistes && expo.artistes.length > 0 && (
+                            <>
+                              {/* Mobile: Only heading */}
+                              <motion.div 
+                                className="block md:hidden mt-3"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5 }}
+                              >
+                                
+                                <div className="flex flex-wrap gap-1">
+                                  {expo.artistes.map((artist, index) => (
+                                    <motion.div
+                                      key={artist.id}
+                                      initial={{ opacity: 0, scale: 0.8 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                                      whileHover={{ scale: 1.05, y: -2 }}
+                                      className="inline-block"
+                                    >
+                                      <Link 
+                                        to={`/artistes/${artist.id}`} 
+                                        className="inline-block px-2 py-1 bg-gray-100 hover:bg-[#972924] hover:text-white text-[#972924] rounded-full text-[0.65rem] transition-all duration-300 border border-gray-200 hover:border-[#972924] shadow-sm hover:shadow-md"
+                                        style={{ fontFamily: 'Poppins Regular, sans-serif' }}
+                                      >
+                                        {artist.nom}
+                                      </Link>
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              </motion.div>
+                              {/* Desktop: Full section with pills */}
+                              <div className="hidden md:block mt-3 md:mt-4">
+                                <h4 className="text-[0.75rem] md:text-[0.9rem] lg:text-[1rem] text-[#972924] font-semibold mb-2" style={{ fontFamily: 'Poppins Medium, sans-serif' }}>
+                                  Autres artistes :
+                                </h4>
+                                <div className="flex flex-wrap gap-1 md:gap-2">
+                                  {expo.artistes.map((artist, index) => (
+                                    <motion.div
+                                      key={artist.id}
+                                      initial={{ opacity: 0, scale: 0.8 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                                      whileHover={{ scale: 1.05, y: -2 }}
+                                      className="inline-block"
+                                    >
+                                      <Link 
+                                        to={`/artistes/${artist.id}`} 
+                                        className="inline-block px-2 py-1 md:px-3 md:py-1.5 bg-gray-100 hover:bg-[#972924] hover:text-white text-[#972924] rounded-full text-[0.65rem] md:text-[0.75rem] lg:text-[0.8rem] transition-all duration-300 border border-gray-200 hover:border-[#972924] shadow-sm hover:shadow-md"
+                                        style={{ fontFamily: 'Poppins Regular, sans-serif' }}
+                                      >
+                                        {artist.nom}
+                                      </Link>
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Bottom section: Buttons */}
+                        <div className="flex justify-between items-center mt-2 md:mt-4 lg:mt-6 gap-1 sm:gap-2">
+                          <Link
+                            to={`/expositions/${expo.id}`}
+                            className="px-1 py-1 sm:px-2 md:px-4 md:py-2 bg-[#972924] text-white hover:bg-[#b33c36] transition text-[0.6rem] sm:text-[0.7rem] md:text-sm flex-1 sm:flex-none text-center"
+                          >
+                            En savoir plus
+                          </Link>
+                          <a
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setSelectedExpo(expo);
+                              setShowVirtualTour(true);
+                            }}
+                            className="px-1 py-1 sm:px-2 md:px-4 md:py-2 bg-[#972924] text-white hover:bg-[#b33c36] transition text-[0.6rem] sm:text-[0.7rem] md:text-sm flex-1 sm:flex-none text-center"
+                          >
+                            <span className="hidden md:inline">Voir la </span>Visite virtuelle
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-        
-        {filteredExpositions.length === 0 && (
-          <motion.div 
-            className="text-center py-20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <p className="text-xl text-gray-600">Aucune exposition ne correspond à vos critères.</p>
-          </motion.div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            ))}
+        </div>
+        {/* Modal for Virtual Tour */}
+        {showVirtualTour && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60" onClick={() => setShowVirtualTour(false)}>
+            <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full relative p-6" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setShowVirtualTour(false)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-red-600 text-2xl font-bold"
+                aria-label="Fermer"
+              >
+                &times;
+              </button>
+              {selectedExpo && selectedExpo.visite_virtuelle_url ? (
+                <>
+                  <h2 className="text-[1.5rem] md:text-[1.75rem] lg:text-[2rem]  mb-4 text-black" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
+                    Visite virtuelle: <span className="text-[#972924] uppercase">{selectedExpo.titre}</span> 
+                  </h2>
+                  <div className="w-full aspect-video mb-2">
+                    <iframe
+                      src={selectedExpo.visite_virtuelle_url}
+                      title="Visite virtuelle"
+                      className="w-full h-[400px] rounded-lg border-2 border-[#972924]"
+                      allowFullScreen
+                    />
+                  </div>
+                  <a
+                    href={selectedExpo.visite_virtuelle_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-[#972924] text-white hover:bg-[#b33c36] transition text-xs md:text-sm text-center block mt-4"
+                  > 
+                    Ouvrir dans une nouvelle fenêtre
+                  </a>
+                </>
+              ) : (
+                <div className="text-center p-8">
+                  <h2 className="text-[1.5rem] md:text-[1.75rem] lg:text-[2rem] font-bold mb-4 text-[#972924]" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
+                    Visite virtuelle non disponible
+                  </h2>
+                  <p className="text-gray-600 text-[0.9rem] md:text-[1rem] lg:text-[1.1rem]">La visite virtuelle pour cette exposition n'est pas encore disponible.</p>
+                </div>
+              )}
+            </div>
+          </div>
         )}
-      </section>
+        {/* "Afficher plus" and "Afficher moins" buttons */}
+        {years.length > 2 && (
+          <div className="mt-12 md:mt-20 mb-6 text-center px-4 sm:px-6 lg:px-8">
+            {displayedYears < years.length ? (
+              <button
+                onClick={() => setDisplayedYears(years.length)}
+                className="inline-flex items-center gap-2 px-6 md:px-10 py-2 bg-[#FFFFFF] text-[#525252] border border-[#000000] shadow-md hover:bg-[#972924] hover:text-[#FFFFFF] hover:border-[#972924] transition-all duration-300"
+                style={{ fontFamily: 'Poppins Regular, sans-serif' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+                <span className='text-[0.9rem] md:text-[1rem] lg:text-[1.5rem]' style={{ fontFamily: 'Poppins Regular, sans-serif' }}>Afficher plus</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setDisplayedYears(2)}
+                className="inline-flex items-center gap-2 px-6 md:px-10 py-2 bg-[#FFFFFF] text-[#525252] border border-[#000000] shadow-md hover:bg-[#972924] hover:text-[#FFFFFF] hover:border-[#972924] transition-all duration-300"
+                style={{ fontFamily: 'Poppins Regular, sans-serif' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+                <span className='text-[0.9rem] md:text-[1rem] lg:text-[1.5rem]' style={{ fontFamily: 'Poppins Regular, sans-serif' }}>Afficher moins</span>
+              </button>
+            )}
+          </div>
+        )}
+      </main>
     </div>
   );
 };
 
 export default Expositions;
-
-
