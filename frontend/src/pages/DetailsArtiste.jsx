@@ -11,6 +11,7 @@ const DetailsArtiste = () => {
   const [loading, setLoading] = useState(true);
   const [showVirtualTour, setShowVirtualTour] = useState(false);
   const [selectedExpo, setSelectedExpo] = useState(null);
+  const [showAllOeuvres, setShowAllOeuvres] = useState(false);
 
   // Fetch artist details
   const fetchArtistDetails = async (artistId) => {
@@ -103,6 +104,8 @@ const DetailsArtiste = () => {
     );
   }
 
+  const displayedOeuvres = showAllOeuvres ? artiste.oeuvres : artiste.oeuvres.slice(0, 8);
+
   // Split name for color styling
   const [prenom, ...nomRest] = artiste.nom ? artiste.nom.split(' ') : [''];
   const nom = nomRest.join(' ');
@@ -133,7 +136,7 @@ const DetailsArtiste = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="flex flex-col items-center justify-center text-center w-full mb-16">
+            <div className="flex flex-col items-center justify-center text-center w-full mb-8">
               <div className="flex items-center">
                 <img src={circle} alt="circle icon" className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10" />
                 <h2 className="text-[1.5rem] md:text-[1.75rem] lg:text-[2rem] mb-2 font-bold" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>Artiste</h2>
@@ -142,14 +145,23 @@ const DetailsArtiste = () => {
                 {prenom}
                 <span className="text-[#972924]">{nom}</span>
               </h1>
-              <div className="flex flex-wrap gap-6 items-center justify-center text-[1rem] md:text-[1.25rem] lg:text-[1.5rem]">
-                <span>Né(e) : {artiste.date_naissance || 'Date inconnue'}</span>
-                <span>Pays : {artiste.pays || 'Inconnu'}</span>
-              </div>
             </div>
           </motion.div>
         </div>
       </div>
+
+      {/* Naissance et Pays section - modern, animated, visible */}
+      <motion.section
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
+        className="w-full flex justify-center mt-12"
+      >
+        <div className="bg-white rounded-xl shadow-lg px-6 py-4 flex flex-wrap gap-8 items-center justify-center text-[1rem] md:text-[1.25rem] lg:text-[1.5rem] font-semibold" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>
+          <span className="text-black">Né(e) : <span className="text-[#972924]">{artiste.date_naissance || 'Date inconnue'}</span></span>
+          <span className="text-black">Pays : <span className="text-[#972924]">{artiste.pays || 'Inconnu'}</span></span>
+        </div>
+      </motion.section>
 
       {/* About section */}
       <section className="relative py-8 md:py-16 px-4 sm:px-6 lg:px-8 bg-white mx-4 md:mx-8 mt-12 md:mt-16">
@@ -198,34 +210,47 @@ const DetailsArtiste = () => {
               <p>Aucune œuvre disponible pour cet artiste pour le moment.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {artiste.oeuvres.map((oeuvre) => {
-                const [titre1, ...titreRest] = oeuvre.titre ? oeuvre.titre.split(' ') : [''];
-                const titre2 = titreRest.join(' ');
-                return (
-                  <Link
-                    key={oeuvre.id}
-                    to={`/oeuvres/${oeuvre.id}`}
-                    className="bg-[#000000] shadow-md overflow-hidden flex flex-col min-h-[15rem] md:min-h-[20rem] lg:min-h-[25rem] transition-transform hover:scale-105 hover:shadow-lg border border-gray-200"
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                {displayedOeuvres.map((oeuvre) => {
+                  const [titre1, ...titreRest] = oeuvre.titre ? oeuvre.titre.split(' ') : [''];
+                  const titre2 = titreRest.join(' ');
+                  return (
+                    <Link
+                      key={oeuvre.id}
+                      to={`/oeuvres/${oeuvre.id}`}
+                      className="bg-[#000000] shadow-md overflow-hidden flex flex-col min-h-[15rem] md:min-h-[20rem] lg:min-h-[25rem] transition-transform hover:scale-105 hover:shadow-lg border border-gray-200"
+                    >
+                      <img
+                        src={oeuvre.image_principale || '/placeholder-artwork.jpg'}
+                        alt={oeuvre.titre}
+                        className="w-full max-h-[20rem] object-contain py-4 object-center"
+                      />
+                      <div className="p-4 flex-1 flex flex-col justify-between">
+                        <h4
+                          className="text-[1.5rem] md:text-[1.75rem] lg:text-[2rem] font-bold mb-2 text-[#FFFFFF] hover:underline break-words"
+                          style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}
+                        >
+                          {titre1}
+                          <span className='text-[#972924] block'>{titre2}</span>
+                        </h4>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+              {artiste.oeuvres.length > 8 && (
+                <div className="flex justify-center mt-12">
+                  <button
+                    onClick={() => setShowAllOeuvres((v) => !v)}
+                    className="bg-[#FFFFFF] border border-[#972924] text-[#972924]  text-[1rem] md:text-[1.25rem] lg:text-[1.5rem] px-6 py-2  hover:bg-[#b33c36] hover:text-[#FFFFFF] transition"
+                    style={{ fontFamily: 'Poppins Regular, sans-serif' }}
                   >
-                    <img
-                      src={oeuvre.image_principale || '/placeholder-artwork.jpg'}
-                      alt={oeuvre.titre}
-                      className="w-full max-h-[20rem] object-contain py-4 object-center"
-                    />
-                    <div className="p-4 flex-1 flex flex-col justify-between">
-                      <h4
-                        className="text-[1.5rem] md:text-[1.75rem] lg:text-[2rem] font-bold mb-2 text-[#FFFFFF] hover:underline break-words"
-                        style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}
-                      >
-                        {titre1}
-                        <span className='text-[#972924] block'>{titre2}</span>
-                      </h4>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+                    {showAllOeuvres ? ' Afficher moins' : 'Afficher plus'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>

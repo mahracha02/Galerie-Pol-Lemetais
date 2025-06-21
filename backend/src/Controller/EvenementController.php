@@ -143,6 +143,14 @@ final class EvenementController extends AbstractController{
                         'stock' => $oeuvre->getStock(),
                     ];
                 }, $event->getOeuvres()->toArray()),
+                'medias' => array_map(function ($media) {
+                return [
+                    'id' => $media->getId(),
+                    'titre' => $media->getTitre(),
+                    'image' => $this->getParameter('app.base_url') . "photos/" . $media->getImage(),
+                    'link_url' => $media->getLinkUrl(),
+                ];
+            }, $event->getMedias()->toArray()),
                 'artiste_principal' => $event->getArtistePrincipal() ? [
                     'id' => $event->getArtistePrincipal()->getId(),
                     'nom' => $event->getArtistePrincipal()->getNom(),

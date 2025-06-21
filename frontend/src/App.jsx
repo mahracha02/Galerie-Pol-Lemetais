@@ -7,6 +7,7 @@ import About from './pages/Apropos.jsx';
 import Expositions from "./pages/Expositions";
 import ExpoDetails from './pages/ExpoDetails.jsx';
 import Evenements from "./pages/Evenements.jsx";
+import EvenementDetails from './pages/DetailsEvenement.jsx';
 import Artistes from "./pages/Artistes";
 import DetailsArtiste from './pages/DetailsArtiste.jsx';
 import Contact from "./pages/Contact";
@@ -44,6 +45,7 @@ const App = () => {
             <Route path="/expositions" element={<Expositions />} />
             <Route path="/expositions/:id" element={<ExpoDetails />} />
             <Route path="/evenements" element={<Evenements />} />
+            <Route path="/evenements/:id" element={<EvenementDetails />} />
             <Route path="/artistes" element={<Artistes />} />
             <Route path="/artistes/:id" element={<DetailsArtiste />} />
             <Route path="/oeuvres/:id" element={<OeuvreDetails />} />
