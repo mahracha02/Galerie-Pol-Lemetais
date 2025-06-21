@@ -141,6 +141,39 @@ final class ExpositionController extends AbstractController
             'date_debut' => $formatter->format($exposition->getDateDebut()),
             'date_fin' => $formatter->format($exposition->getDateFin()),
             'image' => $this->getParameter('app.base_url') . "photos/" . $exposition->getImage(),
+            'visite_virtuelle_url' => $exposition->getVisiteVirtuelleUrl(),
+            'medias' => array_map(function ($media) {
+                return [
+                    'id' => $media->getId(),
+                    'titre' => $media->getTitre(),
+                    'image' => $this->getParameter('app.base_url') . "photos/" . $media->getImage(),
+                    'link_url' => $media->getLinkUrl(),
+                ];
+            }, $exposition->getMedias()->toArray()),
+            'oeuvres' => array_map(function ($oeuvre) {
+                return [
+                    'id' => $oeuvre->getId(),
+                    'titre' => $oeuvre->getTitre(),
+                    'image_principale' => $this->getParameter('app.base_url') . "photos/" . $oeuvre->getImagePrincipale(),
+                    'dimensions' => $oeuvre->getDimensions(),
+                    'annee' => $oeuvre->getAnnee(),
+                    'technique' => $oeuvre->getTechnique(),
+                    'remarque' => $oeuvre->getRemarque(),
+                    'artiste' => [
+                        'id' => $oeuvre->getArtiste()->getId(),
+                        'nom' => $oeuvre->getArtiste()->getNom(),
+                        'photo' => $this->getParameter('app.base_url') . "photos/" . $oeuvre->getArtiste()->getPhoto(),
+                    ],
+                ];
+            }, $exposition->getOeuvres()->toArray()),
+            'medias' => array_map(function ($media) {
+                return [
+                    'id' => $media->getId(),
+                    'titre' => $media->getTitre(),
+                    'image' => $this->getParameter('app.base_url') . "photos/" . $media->getImage(),
+                    'link_url' => $media->getLinkUrl(),
+                ];
+            }, $exposition->getMedias()->toArray()),
             'catalogue' => $exposition->getCatalogue() ? [
                 'id' => $exposition->getCatalogue()->getId(),
                 'titre' => $exposition->getCatalogue()->getTitre(),

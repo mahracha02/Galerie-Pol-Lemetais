@@ -5,9 +5,9 @@ const Medias = ({ medias = [] }) => {
   return (
     <section className="relative bg-white mt-12 md:mt-16">
       <div className="relative z-10">
-        <div className="flex items-center mb-8 px-4 sm:px-6 lg:px-12">
+        <div className="flex items-center mb-8 px-4 sm:px-6 lg:px-26">
           <img src={circle} alt="circle icon" className="w-8 h-8 mr-2" />
-          <h2 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] text-[#000000] uppercase" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
+          <h2 className="text-[1.5rem] md:text-[2rem] lg:text-[2.5rem] text-[#000000] uppercase " style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
             Médias
           </h2>
         </div>
