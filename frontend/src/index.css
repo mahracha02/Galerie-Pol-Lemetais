@@ -21,6 +21,13 @@ body {
   overflow-x: hidden;
 }
 
+.leaflet-container {
+  z-index: 10 !important;
+}
+.leaflet-popup {
+  z-index: 20 !important;
+}
+
 /* Google Translate styles */
 .goog-te-banner-frame.skiptranslate,
 .goog-te-gadget {

@@ -48,13 +48,13 @@ const Contact = () => {
   };
 
   return (
-    <div className="w-full bg-[#0C0C0C] pb-24">
+    <div className="w-full bg-[#FFFFFF]">
       {/* CONTACT HEADER + FORM */}
       <div className="w-full flex flex-col items-center">
-        <div className="max-w-5xl w-full flex flex-col items-center pt-12 px-4">
-          <div className="flex items-center mb-10 justify-center">
+        <div className="max-w-5xl w-full flex flex-col items-center pt-12 px-4 md:px-0">
+          <div className="flex items-center mb-10 justify-start w-full">
             <img src={circle} alt="circle icon" className="w-7 h-7 mr-3" />
-            <h1 className="text-[2rem] md:text-[2.5rem] lg:text-[3rem] uppercase text-[#0C0C0C]" style={{ color: '#0C0C0C', fontFamily: 'Kenyan Coffee, sans-serif', letterSpacing: 1 }}>
+            <h1 className="text-left text-[2rem] md:text-[2.5rem] lg:text-[3rem] uppercase text-[#0C0C0C]" style={{ color: '#0C0C0C', fontFamily: 'Kenyan Coffee, sans-serif', letterSpacing: 1 }}>
               Contact
             </h1>
           </div>
@@ -140,14 +140,14 @@ const Contact = () => {
       {/* NOUS LOCALISER SECTION */}
       <div className="w-full flex flex-col items-center mt-24">
         <div className="p-12 bg-[#0C0C0C] flex flex-col items-center w-full">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-start w-full">
             <img src={circle} alt="circle icon" className="w-7 h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 mr-3" />
-            <h2 className="text-[2rem] md:text-[2.5rem] lg:text-[3rem] uppercase text-[#FFFFFF]" style={{ fontFamily: 'Kenyan Coffee, sans-serif', letterSpacing: 1 }}>
+            <h2 className="text-left text-[2rem] md:text-[2.5rem] lg:text-[3rem] uppercase text-[#FFFFFF]" style={{ fontFamily: 'Kenyan Coffee, sans-serif', letterSpacing: 1 }}>
               Nous localiser
             </h2>
           </div>
           <div className="flex flex-col md:flex-row gap-12 items-center justify-center mt-8 w-full max-w-4xl">
-            <div className="w-full md:w-[20rem] h-[260px] border rounded border-[#FFFFFF] flex-shrink-0 mx-auto">
+            <div className="w-full max-w-[25rem] h-[15rem] md:h-[20rem] lg:h-[25rem] max-h-[60vh] bg-[#0C0C0C] border rounded border-[#FFFFFF] flex-shrink mx-auto overflow-hidden">
               <MapContainer center={position} zoom={15} className="h-full w-full" style={{ background: '#0C0C0C' }}>
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <Marker position={position} icon={customIcon}>

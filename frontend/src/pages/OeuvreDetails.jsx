@@ -42,16 +42,15 @@ const OeuvreDetails = () => {
   const titre2 = titreRest.join(' ');
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF]">
+    <div className="min-h-screen text-[#FFFFFF]">
       {/* Header section with main image and overlay */}
-      <div className="relative w-full h-[28rem] sm:h-[32rem] lg:h-[40rem] overflow-hidden shadow-md">
+      <div className="relative w-full h-[28rem] sm:h-[32rem] lg:h-[40rem] overflow-hidden shadow-md bg-[#000000] ">
         <img
           src={imagePrincipale || '/placeholder-artwork.jpg'}
           alt={oeuvre.titre}
           className="absolute inset-0 w-full h-full object-contain object-center"
           loading="eager"
         />
-        <div className="absolute inset-0" style={{background: 'linear-gradient(to top, #0C0C0C 80%, #0C0C0C99 40%, transparent 100%)'}}></div>
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
@@ -104,7 +103,7 @@ const OeuvreDetails = () => {
           {/* Main image and miniatures */}
           <div className="flex flex-col gap-4 md:w-1/2">
             <motion.div
-              className="border-4 border-[#0C0C0C] rounded-3xl overflow-hidden shadow-xl cursor-zoom-in bg-[#FFFFFF]"
+              className="border-4 border-[#0C0C0C] overflow-hidden cursor-zoom-in bg-gray-100 "
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -112,7 +111,7 @@ const OeuvreDetails = () => {
               <img
                 src={imagePrincipale || '/placeholder-artwork.jpg'}
                 alt={oeuvre.titre}
-                className="w-full h-[450px] object-contain hover:scale-105 transition-transform duration-300 ease-in-out bg-[#FFFFFF]"
+                className="w-full h-[450px] object-contain hover:scale-105 transition-transform duration-300 ease-in-out bg-[#FFFFFF] p-4"
                 onClick={() => setZoomedImage(imagePrincipale)}
               />
             </motion.div>
@@ -124,7 +123,7 @@ const OeuvreDetails = () => {
                     src={img}
                     alt={`Miniature ${index}`}
                     onClick={() => setImagePrincipale(img)}
-                    className={`w-20 h-20 object-contain border-4 rounded-xl shadow-md cursor-pointer transition-all duration-300 ${
+                    className={`w-20 h-20 object-container border-4 cursor-pointer transition-all duration-300 ${
                       imagePrincipale === img ? 'border-[#972924] scale-105' : 'border-[#0C0C0C] hover:scale-105'
                     } bg-[#FFFFFF]`}
                   />
@@ -164,11 +163,11 @@ const OeuvreDetails = () => {
               </p>
             </div>
             {/* Artiste et exposition */}
-            <div className="mt-6 flex flex-col gap-2">
+            <div className="mt-6 flex flex-col gap-2 text-[1.1rem] md:text-[1.25rem] lg:text-[1.5rem]">
               {oeuvre.artiste && (
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold" style={{ color: '#972924' }}>Artiste :</span>
-                  <Link to={`/artistes/${oeuvre.artiste.id}`} className="font-bold hover:underline" style={{ color: '#0C0C0C' }}>
+                  <span style={{ color: '#0C0C0C' }}>Artiste :</span>
+                  <Link to={`/artistes/${oeuvre.artiste.id}`} className=" hover:underline" style={{ color: '#972924' , fontFamily: 'Kenyan Coffee, sans-serif' }}>
                     {oeuvre.artiste.nom}
                   </Link>
                 </div>
@@ -189,19 +188,19 @@ const OeuvreDetails = () => {
                   const formSection = document.getElementById("contact-form");
                   if (formSection) formSection.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="px-6 py-2 rounded-full shadow font-bold transition duration-300"
-                style={{ background: '#972924', color: '#FFFFFF', border: '1px solid #0C0C0C' }}
+                className="px-6 py-2  font-bold transition duration-300"
+                style={{ background: '#972924', color: '#FFFFFF', border: '1px solid #0C0C0C', fontFamily: 'Poppins Regular, sans-serif' }}
               >
                 Se renseigner
               </button>
               <button
                 disabled={oeuvre.stock <= 0}
-                className={`px-6 py-2 rounded-full shadow font-bold transition duration-300 ${
+                className={`px-6 py-2 font-bold transition duration-300 ${
                   oeuvre.stock > 0
                     ? ''
                     : 'cursor-not-allowed opacity-60'
                 }`}
-                style={{ background: oeuvre.stock > 0 ? '#0C0C0C' : '#FFFFFF', color: oeuvre.stock > 0 ? '#FFFFFF' : '#972924', border: '1px solid #972924' }}
+                style={{ background: oeuvre.stock > 0 ? '#0C0C0C' : '#FFFFFF', color: oeuvre.stock > 0 ? '#FFFFFF' : '#972924', border: '1px solid #972924' , fontFamily: 'Poppins Regular, sans-serif' }}
               >
                 Acheter
               </button>
@@ -216,46 +215,46 @@ const OeuvreDetails = () => {
       {/* Formulaire contact */}
       <motion.div
         id="contact-form"
-        className="mt-20 p-10 rounded-3xl shadow-2xl border max-w-3xl mx-auto"
-        style={{ background: '#FFFFFF', borderColor: '#972924' }}
+        className="mt-20 p-10 border max-w-3xl mx-auto mb-12"
+        style={{ background: '#000000', borderColor: '#972924' }}
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.2 }}
       >
-        <h2 className="text-2xl font-bold mb-6" style={{ color: '#972924' }}>Formulaire de renseignement</h2>
+        <h2 className="text-[1.25rem] md:text-[1.5rem] lg:text-[2rem] mb-6" style={{ color: '#972924', fontFamily: 'Kenyan Coffee, sans-serif'  }}>Formulaire de renseignement</h2>
         <form className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
           <input
             type="text"
             placeholder="Votre nom"
-            className="p-3 rounded-xl focus:outline-none focus:ring-2"
-            style={{ border: '1px solid #0C0C0C', color: '#0C0C0C', background: '#FFFFFF' }}
+            className="p-3  focus:outline-none focus:ring-2"
+            style={{ border: '1px solid #0C0C0C', color: '#FFFFFF', background: '#505050' }}
             required
           />
           <input
             type="email"
             placeholder="Votre email"
-            className="p-3 rounded-xl focus:outline-none focus:ring-2"
-            style={{ border: '1px solid #0C0C0C', color: '#0C0C0C', background: '#FFFFFF' }}
+            className="p-3 focus:outline-none focus:ring-2"
+            style={{ border: '1px solid #0C0C0C', color: '#FFFFFF', background: '#505050' }}
             required
           />
           <input
             type="tel"
             placeholder="Votre numéro de tel (facultatif)"
-            className="p-3 rounded-xl focus:outline-none focus:ring-2"
-            style={{ border: '1px solid #0C0C0C', color: '#0C0C0C', background: '#FFFFFF' }}
+            className="p-3  focus:outline-none focus:ring-2"
+            style={{ border: '1px solid #0C0C0C', color: '#FFFFFF', background: '#505050' }}
           />
           <textarea
             placeholder="Votre message"
-            className="p-3 rounded-xl md:col-span-3 focus:outline-none focus:ring-2"
+            className="p-3  md:col-span-3 focus:outline-none focus:ring-2"
             rows="5"
-            style={{ border: '1px solid #0C0C0C', color: '#0C0C0C', background: '#FFFFFF' }}
+            style={{ border: '1px solid #0C0C0C', color: '#FFFFFF', background: '#505050' }}
             required
           />
           <button
             type="submit"
-            className="px-6 py-2 rounded-full font-bold transition md:col-span-3"
-            style={{ background: '#972924', color: '#FFFFFF', border: '1px solid #0C0C0C' }}
+            className="px-6 py-2 font-bold transition md:col-span-3"
+            style={{ background: '#972924', color: '#FFFFFF', border: '1px solid #FFFFFF', fontFamily: 'Poppins Regular, sans-serif' }}
           >
             Envoyer ma demande
           </button>
