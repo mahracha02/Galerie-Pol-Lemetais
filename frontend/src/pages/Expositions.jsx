@@ -170,7 +170,7 @@ const Expositions = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.5, delay: idx * 0.1 }}
                       whileHover={{ scale: 1.02 }}
-                      className="flex flex-row border border-3 border-[#972924] overflow-hidden bg-white h-[14rem] md:h-[20rem] lg:h-[25rem] "
+                      className="flex flex-row border border-3 border-[#972924] overflow-hidden bg-white h-[18rem] md:h-[24rem] lg:h-[26rem] "
                     >
                       {/* Image */}
                       <div className="w-2/5  h-full flex-shrink-0">
@@ -206,9 +206,69 @@ const Expositions = () => {
                             </div>
                           </div>
                           {/* Description */}
-                          <p className="line-clamp-2 md:line-clamp-3 text-[0.8rem] md:text-[1rem] lg:text-[1.1rem] text-black mt-2 md:mt-4" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>
+                          <p className="line-clamp-2 text-[0.8rem] md:text-[1rem] lg:text-[1.1rem] text-black mt-2 md:mt-4" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>
                             {expo.description}
                           </p>
+                          {/* Autres artistes */}
+                          {expo.artistes && expo.artistes.length > 0 && (
+                            <>
+                              {/* Mobile: Only heading */}
+                              <motion.div 
+                                className="block md:hidden mt-3"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5 }}
+                              >
+                                
+                                <div className="flex flex-wrap gap-1">
+                                  {expo.artistes.map((artist, index) => (
+                                    <motion.div
+                                      key={artist.id}
+                                      initial={{ opacity: 0, scale: 0.8 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                                      whileHover={{ scale: 1.05, y: -2 }}
+                                      className="inline-block"
+                                    >
+                                      <Link 
+                                        to={`/artistes/${artist.id}`} 
+                                        className="inline-block px-2 py-1 bg-gray-100 hover:bg-[#972924] hover:text-white text-[#972924] rounded-full text-[0.65rem] transition-all duration-300 border border-gray-200 hover:border-[#972924] shadow-sm hover:shadow-md"
+                                        style={{ fontFamily: 'Poppins Regular, sans-serif' }}
+                                      >
+                                        {artist.nom}
+                                      </Link>
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              </motion.div>
+                              {/* Desktop: Full section with pills */}
+                              <div className="hidden md:block mt-3 md:mt-4">
+                                <h4 className="text-[0.75rem] md:text-[0.9rem] lg:text-[1rem] text-[#972924] font-semibold mb-2" style={{ fontFamily: 'Poppins Medium, sans-serif' }}>
+                                  Autres artistes :
+                                </h4>
+                                <div className="flex flex-wrap gap-1 md:gap-2">
+                                  {expo.artistes.map((artist, index) => (
+                                    <motion.div
+                                      key={artist.id}
+                                      initial={{ opacity: 0, scale: 0.8 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                                      whileHover={{ scale: 1.05, y: -2 }}
+                                      className="inline-block"
+                                    >
+                                      <Link 
+                                        to={`/artistes/${artist.id}`} 
+                                        className="inline-block px-2 py-1 md:px-3 md:py-1.5 bg-gray-100 hover:bg-[#972924] hover:text-white text-[#972924] rounded-full text-[0.65rem] md:text-[0.75rem] lg:text-[0.8rem] transition-all duration-300 border border-gray-200 hover:border-[#972924] shadow-sm hover:shadow-md"
+                                        style={{ fontFamily: 'Poppins Regular, sans-serif' }}
+                                      >
+                                        {artist.nom}
+                                      </Link>
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              </div>
+                            </>
+                          )}
                         </div>
 
                         {/* Bottom section: Buttons */}
