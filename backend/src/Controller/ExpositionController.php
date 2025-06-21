@@ -98,7 +98,13 @@ final class ExpositionController extends AbstractController
                 'date_debut' => $expo->getDateDebut()->format('Y-m-d'),
                 'date_fin' => $expo->getDateFin()->format('Y-m-d'),
                 'image' => $this->getParameter('app.base_url')."photos/" . $expo->getImage(),
-                'catalogue' => $expo->getCatalogue(),
+                'visite_virtuelle_url' => $expo->getVisiteVirtuelleUrl(),
+                'catalogue' => $expo->getCatalogue() ? [
+                    'id' => $expo->getCatalogue()->getId(),
+                    'titre' => $expo->getCatalogue()->getTitre(),
+                    'image' => $this->getParameter('app.base_url') . "photos/" . $expo->getCatalogue()->getImage(),
+                    'link' => $expo->getCatalogue()->getLink(),
+                ] : null,
                 'artiste_principal' => $expo->getArtistePrincipal() ? [
                     'id' => $expo->getArtistePrincipal()->getId(),
                     'nom' => $expo->getArtistePrincipal()->getNom(),
@@ -135,7 +141,12 @@ final class ExpositionController extends AbstractController
             'date_debut' => $formatter->format($exposition->getDateDebut()),
             'date_fin' => $formatter->format($exposition->getDateFin()),
             'image' => $this->getParameter('app.base_url') . "photos/" . $exposition->getImage(),
-            'catalogue' => $exposition->getCatalogue(),
+            'catalogue' => $exposition->getCatalogue() ? [
+                'id' => $exposition->getCatalogue()->getId(),
+                'titre' => $exposition->getCatalogue()->getTitre(),
+                'image' => $this->getParameter('app.base_url') . "photos/" . $exposition->getCatalogue()->getImage(),
+                'link' => $exposition->getCatalogue()->getLink(),
+            ] : null,
             'artiste_principal' => $exposition->getArtistePrincipal() ? [
                 'id' => $exposition->getArtistePrincipal()->getId(),
                 'nom' => $exposition->getArtistePrincipal()->getNom(),

@@ -66,6 +66,9 @@ class Exposition
     #[ORM\OneToMany(targetEntity: Medias::class, mappedBy: 'exposition')]
     private Collection $medias;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $visite_virtuelle_url = null;
+
 
 
     
@@ -270,6 +273,18 @@ class Exposition
                 $media->setExposition(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getVisiteVirtuelleUrl(): ?string
+    {
+        return $this->visite_virtuelle_url;
+    }
+
+    public function setVisiteVirtuelleUrl(?string $visite_virtuelle_url): static
+    {
+        $this->visite_virtuelle_url = $visite_virtuelle_url;
 
         return $this;
     }
