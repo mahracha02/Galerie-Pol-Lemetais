@@ -55,10 +55,24 @@ class Evenement
     #[ORM\Column]
     private ?bool $published = null;
 
+    /**
+     * @var Collection<int, Medias>
+     */
+    #[ORM\OneToMany(targetEntity: Medias::class, mappedBy: 'evenement')]
+    private Collection $medias;
+
+    /**
+     * @var Collection<int, Oeuvre>
+     */
+    #[ORM\ManyToMany(targetEntity: Oeuvre::class, mappedBy: 'evenement')]
+    private Collection $oeuvres;
+
     public function __construct()
     {
         $this->artists = new ArrayCollection();
         $this->actualites = new ArrayCollection();
+        $this->medias = new ArrayCollection();
+        $this->oeuvres = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -224,6 +238,63 @@ class Evenement
     public function setPublished(bool $published): static
     {
         $this->published = $published;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Medias>
+     */
+    public function getMedias(): Collection
+    {
+        return $this->medias;
+    }
+
+    public function addMedia(Medias $media): static
+    {
+        if (!$this->medias->contains($media)) {
+            $this->medias->add($media);
+            $media->setEvenement($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMedia(Medias $media): static
+    {
+        if ($this->medias->removeElement($media)) {
+            // set the owning side to null (unless already changed)
+            if ($media->getEvenement() === $this) {
+                $media->setEvenement(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Oeuvre>
+     */
+    public function getOeuvres(): Collection
+    {
+        return $this->oeuvres;
+    }
+
+    public function addOeuvre(Oeuvre $oeuvre): static
+    {
+        if (!$this->oeuvres->contains($oeuvre)) {
+            $this->oeuvres->add($oeuvre);
+            $oeuvre->addEvenement($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOeuvre(Oeuvre $oeuvre): static
+    {
+        if ($this->oeuvres->removeElement($oeuvre)) {
+            $oeuvre->removeEvenement($this);
+        }
 
         return $this;
     }

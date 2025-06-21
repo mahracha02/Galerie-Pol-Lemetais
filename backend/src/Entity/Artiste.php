@@ -78,6 +78,12 @@ class Artiste
     #[ORM\OneToMany(targetEntity: Oeuvre::class, mappedBy: 'artiste')]
     private Collection $lesOeuvres;
 
+    /**
+     * @var Collection<int, Medias>
+     */
+    #[ORM\OneToMany(targetEntity: Medias::class, mappedBy: 'artiste')]
+    private Collection $medias;
+
     public function __construct()
     {
         $this->events = new ArrayCollection();
@@ -87,6 +93,7 @@ class Artiste
         $this->expo = new ArrayCollection();
         $this->oeuvres = new ArrayCollection();
         $this->lesOeuvres = new ArrayCollection();
+        $this->medias = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -342,6 +349,36 @@ class Artiste
             // set the owning side to null (unless already changed)
             if ($lesOeuvre->getArtiste() === $this) {
                 $lesOeuvre->setArtiste(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Medias>
+     */
+    public function getMedias(): Collection
+    {
+        return $this->medias;
+    }
+
+    public function addMedia(Medias $media): static
+    {
+        if (!$this->medias->contains($media)) {
+            $this->medias->add($media);
+            $media->setArtiste($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMedia(Medias $media): static
+    {
+        if ($this->medias->removeElement($media)) {
+            // set the owning side to null (unless already changed)
+            if ($media->getArtiste() === $this) {
+                $media->setArtiste(null);
             }
         }
 

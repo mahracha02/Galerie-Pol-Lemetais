@@ -58,7 +58,7 @@ final class ExpositionController extends AbstractController
                 'date_debut' => $formatter->format($expo->getDateDebut()),
                 'date_fin' => $formatter->format($expo->getDateFin()),
                 'image' => $this->getParameter('app.base_url')."photos/" . $expo->getImage(),
-                'catalogue_url' => $expo->getCatalogueUrl(),
+                'catalogue' => $expo->getCatalogue(),
                 'artiste_principal' => $expo->getArtistePrincipal() ? [
                     'id' => $expo->getArtistePrincipal()->getId(),
                     'nom' => $expo->getArtistePrincipal()->getNom(),
@@ -98,7 +98,13 @@ final class ExpositionController extends AbstractController
                 'date_debut' => $expo->getDateDebut()->format('Y-m-d'),
                 'date_fin' => $expo->getDateFin()->format('Y-m-d'),
                 'image' => $this->getParameter('app.base_url')."photos/" . $expo->getImage(),
-                'catalogue_url' => $expo->getCatalogueUrl(),
+                'visite_virtuelle_url' => $expo->getVisiteVirtuelleUrl(),
+                'catalogue' => $expo->getCatalogue() ? [
+                    'id' => $expo->getCatalogue()->getId(),
+                    'titre' => $expo->getCatalogue()->getTitre(),
+                    'image' => $this->getParameter('app.base_url') . "photos/" . $expo->getCatalogue()->getImage(),
+                    'link' => $expo->getCatalogue()->getLink(),
+                ] : null,
                 'artiste_principal' => $expo->getArtistePrincipal() ? [
                     'id' => $expo->getArtistePrincipal()->getId(),
                     'nom' => $expo->getArtistePrincipal()->getNom(),
@@ -135,7 +141,45 @@ final class ExpositionController extends AbstractController
             'date_debut' => $formatter->format($exposition->getDateDebut()),
             'date_fin' => $formatter->format($exposition->getDateFin()),
             'image' => $this->getParameter('app.base_url') . "photos/" . $exposition->getImage(),
-            'catalogue_url' => $exposition->getCatalogueUrl(),
+            'visite_virtuelle_url' => $exposition->getVisiteVirtuelleUrl(),
+            'medias' => array_map(function ($media) {
+                return [
+                    'id' => $media->getId(),
+                    'titre' => $media->getTitre(),
+                    'image' => $this->getParameter('app.base_url') . "photos/" . $media->getImage(),
+                    'link_url' => $media->getLinkUrl(),
+                ];
+            }, $exposition->getMedias()->toArray()),
+            'oeuvres' => array_map(function ($oeuvre) {
+                return [
+                    'id' => $oeuvre->getId(),
+                    'titre' => $oeuvre->getTitre(),
+                    'image_principale' => $this->getParameter('app.base_url') . "photos/" . $oeuvre->getImagePrincipale(),
+                    'dimensions' => $oeuvre->getDimensions(),
+                    'annee' => $oeuvre->getAnnee(),
+                    'technique' => $oeuvre->getTechnique(),
+                    'remarque' => $oeuvre->getRemarque(),
+                    'artiste' => [
+                        'id' => $oeuvre->getArtiste()->getId(),
+                        'nom' => $oeuvre->getArtiste()->getNom(),
+                        'photo' => $this->getParameter('app.base_url') . "photos/" . $oeuvre->getArtiste()->getPhoto(),
+                    ],
+                ];
+            }, $exposition->getOeuvres()->toArray()),
+            'medias' => array_map(function ($media) {
+                return [
+                    'id' => $media->getId(),
+                    'titre' => $media->getTitre(),
+                    'image' => $this->getParameter('app.base_url') . "photos/" . $media->getImage(),
+                    'link_url' => $media->getLinkUrl(),
+                ];
+            }, $exposition->getMedias()->toArray()),
+            'catalogue' => $exposition->getCatalogue() ? [
+                'id' => $exposition->getCatalogue()->getId(),
+                'titre' => $exposition->getCatalogue()->getTitre(),
+                'image' => $this->getParameter('app.base_url') . "photos/" . $exposition->getCatalogue()->getImage(),
+                'link' => $exposition->getCatalogue()->getLink(),
+            ] : null,
             'artiste_principal' => $exposition->getArtistePrincipal() ? [
                 'id' => $exposition->getArtistePrincipal()->getId(),
                 'nom' => $exposition->getArtistePrincipal()->getNom(),
@@ -186,7 +230,7 @@ final class ExpositionController extends AbstractController
                 $exposition->setAnnee($data['annee'] ?? date('Y'));
                 $exposition->setDateDebut(new \DateTime($data['date_debut']));
                 $exposition->setDateFin(new \DateTime($data['date_fin']));
-                $exposition->setCatalogueUrl($data['catalogue_url'] ?? '');
+                $exposition->setCatalogue($data['catalogue'] ?? '');
                 $exposition->setPublished($data['published'] ?? false);
 
                 // Gestion de l'image
@@ -273,7 +317,7 @@ final class ExpositionController extends AbstractController
                 $actualite->setDate(new \DateTime());
                 $actualite->setDescription($exposition->getDescription());
                 $actualite->setImage($exposition->getImage());
-                $actualite->setLink($exposition->getCatalogueUrl());
+                $actualite->setLink($exposition->getCatalogue());
                 $actualite->setNouveau(true);
                 $actualite->setPublished($exposition->isPublished());
                 $actualite->setExposition($exposition);
@@ -340,7 +384,7 @@ final class ExpositionController extends AbstractController
                 $exposition->setAnnee($data['annee'] ?? date('Y'));
                 $exposition->setDateDebut(new \DateTime($data['date_debut']));
                 $exposition->setDateFin(new \DateTime($data['date_fin']));
-                $exposition->setCatalogueUrl($data['catalogue_url'] ?? '');
+                $exposition->setCatalogue($data['catalogue'] ?? '');
                 $exposition->setPublished($data['published'] ?? false);
 
                 // Gestion de l'image
@@ -407,7 +451,7 @@ final class ExpositionController extends AbstractController
                         $actualite->setDate(new \DateTime());
                         $actualite->setDescription($exposition->getDescription());
                         $actualite->setImage($exposition->getImage());
-                        $actualite->setLink($exposition->getCatalogueUrl());
+                        $actualite->setLink($exposition->getCatalogue());
                         $actualite->setNouveau(true);
                         $actualite->setPublished($exposition->isPublished());
                     }
@@ -417,7 +461,7 @@ final class ExpositionController extends AbstractController
                     $actualite->setDate(new \DateTime());
                     $actualite->setDescription($exposition->getDescription());
                     $actualite->setImage($exposition->getImage());
-                    $actualite->setLink($exposition->getCatalogueUrl());
+                    $actualite->setLink($exposition->getCatalogue());
                     $actualite->setNouveau(true);
                     $actualite->setPublished($exposition->isPublished());
                     $actualite->setExposition($exposition);

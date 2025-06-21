@@ -111,6 +111,65 @@ final class EvenementController extends AbstractController{
         return $this->json($data);
     }
 
+    #[Route('/api/{id}', name: 'api_evenement_show', methods: ['GET'])]
+    public function showEvenement(EvenementRepository $evenementsRepository, Evenement $evenement): JsonResponse
+    {
+        $evenements = $evenementsRepository->findBy(['id' => $evenement->getId()]);
+        
+        $formatter = new IntlDateFormatter(
+            'fr_FR',
+            IntlDateFormatter::LONG,
+            IntlDateFormatter::NONE
+        );
+
+        $data= array_map(function(Evenement $event) use ($formatter)
+        {
+            return [
+                'id'=> $event->getId(),
+                'titre'=> $event->getTitre(),
+                'description'=> $event->getDescription(),
+                'date_debut'=> $formatter->format($event->getDateDebut()), 
+                'date_fin'=> $formatter->format($event->getDateFin()),
+                'lieu'=> $event->getLieu(),
+                'image' => $this->getParameter('app.base_url')."photos/".$event->getImage(),
+                'site_url'=> $event->getSiteUrl(),
+                'oeuvres' => array_map(function ($oeuvre) {
+                    return [
+                        'id' => $oeuvre->getId(),
+                        'titre' => $oeuvre->getTitre(),
+                        'description' => $oeuvre->getDescription(),
+                        'image_principale' => $this->getParameter('app.base_url')."photos/" . $oeuvre->getImagePrincipale(),
+                        'prix' => $oeuvre->getPrix(),
+                        'stock' => $oeuvre->getStock(),
+                    ];
+                }, $event->getOeuvres()->toArray()),
+                'medias' => array_map(function ($media) {
+                return [
+                    'id' => $media->getId(),
+                    'titre' => $media->getTitre(),
+                    'image' => $this->getParameter('app.base_url') . "photos/" . $media->getImage(),
+                    'link_url' => $media->getLinkUrl(),
+                ];
+            }, $event->getMedias()->toArray()),
+                'artiste_principal' => $event->getArtistePrincipal() ? [
+                    'id' => $event->getArtistePrincipal()->getId(),
+                    'nom' => $event->getArtistePrincipal()->getNom(),
+                    'photo' => $this->getParameter('app.base_url')."photos/" . $event->getArtistePrincipal()->getPhoto(),
+                ] : null,
+                'artistes' => array_map(function ($artiste) {
+                    return [
+                        'id' => $artiste->getId(),
+                        'nom' => $artiste->getNom(),
+                        'photo' => $this->getParameter('app.base_url')."photos/" . $artiste->getPhoto(),
+                    ];
+                }, $event->getArtists()->toArray()),
+                'published' => $event->isPublished(),
+            ];
+
+        }, $evenements);
+
+        return $this->json($data);
+    }
     #[Route('/api/add', name: 'api_evenement_add', methods: ['POST'])]
     public function addEvenement(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): JsonResponse
     {

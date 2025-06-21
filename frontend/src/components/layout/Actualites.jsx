@@ -1,79 +1,77 @@
-import {  useEffect, useState } from 'react';
-
-
-// Animated SVG background as a React component
-const AnimatedArtBg = () => (
-  <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-    {/* Purple blob, top left */}
-    <svg className="absolute left-[-10%] top-[-10%] w-[60vw] h-[60vw] animate-pulse opacity-40" viewBox="0 0 600 600">
-      <g transform="translate(300,300)">
-        <path d="M120,-150C160,-120,200,-80,210,-30C220,20,200,80,160,120C120,160,60,180,10,180C-40,180,-80,160,-120,120C-160,80,-200,20,-200,-40C-200,-100,-160,-160,-100,-180C-40,-200,40,-180,120,-150Z" fill="#a21caf" />
-      </g>
-    </svg>
-    {/* Red blob, bottom right */}
-    <svg className="absolute right-[-10%] bottom-[-10%] w-[50vw] h-[50vw] animate-spin-slow opacity-30" viewBox="0 0 600 600">
-      <g transform="translate(300,300)">
-        <path d="M120,-150C160,-120,200,-80,210,-30C220,20,200,80,160,120C120,160,60,180,10,180C-40,180,-80,160,-120,120C-160,80,-200,20,-200,-40C-200,-100,-160,-160,-100,-180C-40,-200,40,-180,120,-150Z" fill="#f43f5e" />
-      </g>
-    </svg>
-  </div>
-);
+import { useEffect, useState } from 'react';
 
 const Actualites = () => {
   const [actualites, setActualites] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch('/actualites/api');
-      const data = await response.json();
-      setActualites(data);
+      try {
+        setLoading(true);
+        const response = await fetch(`/actualites/api?page=${page}&limit=3`);
+        if (!response.ok) throw new Error('Failed to fetch actualites');
+        const data = await response.json();
+        
+        setActualites(prevActualites => {
+          if (page === 1) return data;
+          return [...prevActualites, ...data];
+        });
+      } catch (error) {
+        console.error("Erreur lors du chargement des actualités :", error);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchData().catch((error) => {
-      console.error("Erreur lors du chargement des actualités :", error);
-    });
-  }, []);
+    fetchData();
+  }, [page]);
 
+  const handleScroll = (e) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.target;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5) {
+      setPage(prev => prev + 1);
+    }
+  };
 
+  return (  
+    <section className="relative py-4 px-4 sm:px-6 lg:px-8 bg-white mt-26 mx-4 sm:mx-8" onScroll={handleScroll}>
+      <h2 className="relative z-10 text-left text-3xl sm:text-5xl md:text-[4.5rem] text-[#000000] mb-6" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
+        ACTUALITÉ
+      </h2>
 
-  return (
-    <section className="relative py-16 mt-12 px-6 bg-gradient-to-br from-gray-900 via-gray-800 to-black mb-12 overflow-hidden">
-      <AnimatedArtBg />
-      <h2 className="text-4xl font-bold text-center text-white mb-8 drop-shadow-lg">📰 Actualités</h2>
-      <div className="grid gap-8 max-w-6xl mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {actualites.map((news) => (
           <div
             key={news.id}
-            className="relative bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden transition-transform duration-200 hover:-translate-y-2 hover:shadow-2xl"
+            className="relative bg-black shadow-lg flex flex-col overflow-hidden transition-transform duration-200 hover:-translate-y-2 hover:shadow-2xl h-[27rem] sm:h-[30rem] lg:h-[40rem]"
           >
-            {/* "Nouveau" Banner */}
-            {news.nouveau && (
-              <div className="absolute left-0 top-0 z-10">
-                <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-br-2xl shadow-lg animate-bounce">
-                  Nouveau
-                </span>
-              </div>
-            )}
             <img
               src={news.image}
               alt={news.titre}
-              className="w-full h-48 object-cover"
+              loading="lazy"
+              className="w-full h-[15rem] sm:h-[25rem] object-cover"
             />
-            <div className="p-6 flex flex-col flex-1">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">{news.title}</h3>
-              <span className="text-sm text-purple-400 mb-4">
-                {new Date(news.date).toLocaleDateString('fr-FR')}
-              </span>
-              <p className="text-gray-600 flex-1 mb-6">{news.description}</p>
-              <a
-                href={news.link}
-                className="inline-block bg-gradient-to-r from-purple-400 to-indigo-500 text-white px-5 py-2 rounded-full font-semibold shadow hover:from-indigo-500 hover:to-purple-400 transition"
-              >
-                En savoir plus
-              </a>
+            <div className="relative z-10 text-left p-4 px-6 text-[#FFFFFF] flex flex-col h-full">
+              <h3 className="text-2xl sm:text-[2.5rem] mb-2 mt-2 sm:mt-4 uppercase" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>{news.title}</h3>
+              <p className="text-sm sm:text-[1rem] flex-1 mb-4 line-clamp-2" style={{ fontFamily: 'Poppins Regular, sans-serif' }}>{news.description}</p>
+              <div className="mt-auto mb-4 sm:mb-6">
+                <a
+                  href={news.link}
+                  className="inline-block border border-red-600 px-2 py-1 font-semibold hover:bg-red-600 hover:text-white transition-colors duration-300 text-sm text-center mt-2 w-30 ml-auto"
+                >
+                  En savoir plus
+                </a>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      {loading && (
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#972924]"></div>
+        </div>
+      )}
     </section>
   );
 };

@@ -37,9 +37,6 @@ class Exposition
     #[ORM\Column(length: 255)]
     private ?string $image = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $catalogue_url = null;
-
     /**
      * @var Collection<int, Artiste>
      */
@@ -59,6 +56,25 @@ class Exposition
     #[ORM\Column]
     private ?bool $published = null;
 
+    #[ORM\ManyToOne(inversedBy: 'expositions')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?catalogue $catalogue = null;
+
+    /**
+     * @var Collection<int, Medias>
+     */
+    #[ORM\OneToMany(targetEntity: Medias::class, mappedBy: 'exposition')]
+    private Collection $medias;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $visite_virtuelle_url = null;
+
+    /**
+     * @var Collection<int, Oeuvre>
+     */
+    #[ORM\OneToMany(targetEntity: Oeuvre::class, mappedBy: 'exposition')]
+    private Collection $oeuvres;
+
 
 
     
@@ -67,6 +83,8 @@ class Exposition
     {
         $this->artists = new ArrayCollection();
         $this->actualites = new ArrayCollection();
+        $this->medias = new ArrayCollection();
+        $this->oeuvres = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -146,18 +164,6 @@ class Exposition
         return $this;
     }
 
-    public function getCatalogueUrl(): ?string
-    {
-        return $this->catalogue_url;
-    }
-
-    public function setCatalogueUrl(string $catalogue_url): static
-    {
-        $this->catalogue_url = $catalogue_url;
-
-        return $this;
-    }
-
     /**
      * @return Collection<int, Artiste>
      */
@@ -232,6 +238,90 @@ class Exposition
     public function setPublished(bool $published): static
     {
         $this->published = $published;
+
+        return $this;
+    }
+
+    public function getCatalogue(): ?catalogue
+    {
+        return $this->catalogue;
+    }
+
+    public function setCatalogue(?catalogue $catalogue): static
+    {
+        $this->catalogue = $catalogue;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Medias>
+     */
+    public function getMedias(): Collection
+    {
+        return $this->medias;
+    }
+
+    public function addMedia(Medias $media): static
+    {
+        if (!$this->medias->contains($media)) {
+            $this->medias->add($media);
+            $media->setExposition($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMedia(Medias $media): static
+    {
+        if ($this->medias->removeElement($media)) {
+            // set the owning side to null (unless already changed)
+            if ($media->getExposition() === $this) {
+                $media->setExposition(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getVisiteVirtuelleUrl(): ?string
+    {
+        return $this->visite_virtuelle_url;
+    }
+
+    public function setVisiteVirtuelleUrl(?string $visite_virtuelle_url): static
+    {
+        $this->visite_virtuelle_url = $visite_virtuelle_url;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Oeuvre>
+     */
+    public function getOeuvres(): Collection
+    {
+        return $this->oeuvres;
+    }
+
+    public function addOeuvre(Oeuvre $oeuvre): static
+    {
+        if (!$this->oeuvres->contains($oeuvre)) {
+            $this->oeuvres->add($oeuvre);
+            $oeuvre->setExposition($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOeuvre(Oeuvre $oeuvre): static
+    {
+        if ($this->oeuvres->removeElement($oeuvre)) {
+            // set the owning side to null (unless already changed)
+            if ($oeuvre->getExposition() === $this) {
+                $oeuvre->setExposition(null);
+            }
+        }
 
         return $this;
     }

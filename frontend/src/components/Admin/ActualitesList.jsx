@@ -33,6 +33,7 @@ const ActualitesList = () => {
   
   const [actualiteToDelete, setActualiteToDelete] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
 
   // Fetch actualités
   useEffect(() => {
@@ -99,8 +100,51 @@ const ActualitesList = () => {
       link: actualite.link || actualite.url,
       published: actualite.published || actualite.isPublished || false,
     });
+    if (actualite.image) {
+      setPreviewImage(actualite.image);
+    } else {
+      setPreviewImage(null);
+    }
     setModalMode('edit');
     setShowFormModal(true);
+  };
+
+  // Handle image
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0] || e.dataTransfer?.files?.[0];
+    if (file) {
+      console.log('File selected:', file);
+      setFormData(prev => ({ ...prev, image: file }));
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPreviewImage(event.target.result);
+        setFormData(prev => ({ ...prev, image: file }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData(prev => ({ ...prev, image: null }));
+    setPreviewImage(null);
   };
 
   // Submit form (add/edit)
@@ -115,33 +159,230 @@ const ActualitesList = () => {
       
       const method = modalMode === 'add' ? 'POST' : 'PUT';
       
+      // Préparation des données de base
+      const dataToSend = {
+        titre: formData.titre?.trim() || '',
+        description: formData.description?.trim() || '',
+        date: formData.date ? new Date(formData.date).toISOString().split('T')[0] : '',
+        link: formData.link?.trim() || '',
+        published: Boolean(formData.published)
+      };
+
+      // Gestion de l'image
+      if (formData.image instanceof File) {
+        try {
+          console.log('Processing image:', {
+            name: formData.image.name,
+            size: formData.image.size,
+            type: formData.image.type
+          });
+
+          // Vérifier la taille maximale (3MB)
+          const maxSize = 3 * 1024 * 1024; // 3MB
+          if (formData.image.size > maxSize) {
+            throw new Error('L\'image est trop grande. Taille maximum: 3MB');
+          }
+
+          // Convertir et compresser l'image
+          dataToSend.image = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              try {
+                const base64 = reader.result;
+                const img = new Image();
+                img.onload = () => {
+                  try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    // Calculer les dimensions pour réduire la taille
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDimension = 600; // Réduit encore plus pour garantir une petite taille
+
+                    if (width > height && width > maxDimension) {
+                      height = Math.round((height * maxDimension) / width);
+                      width = maxDimension;
+                    } else if (height > maxDimension) {
+                      width = Math.round((width * maxDimension) / height);
+                      height = maxDimension;
+                    }
+
+                    // Appliquer les dimensions
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Déterminer le format et la qualité
+                    let mimeType = formData.image.type;
+                    let quality = 0.7; // Qualité par défaut
+
+                    // Si c'est un PNG, on le convertit en JPG pour une meilleure compression
+                    if (mimeType === 'image/png') {
+                      mimeType = 'image/jpeg';
+                      quality = 0.6; // Qualité plus basse pour JPG
+                    }
+
+                    // Convertir en base64 avec compression
+                    const base64Result = canvas.toDataURL(mimeType, quality);
+                    
+                    // Vérifier la taille des données
+                    const dataSize = Math.round(base64Result.length * 0.75);
+                    console.log('Image compressed:', {
+                      originalSize: formData.image.size,
+                      compressedSize: dataSize,
+                      quality: quality,
+                      dimensions: `${width}x${height}`,
+                      format: mimeType
+                    });
+
+                    // Vérifier que la compression a bien réduit la taille
+                    if (dataSize > 200 * 1024) { // Réduit à 200KB
+                      // Réessayer avec une qualité plus basse
+                      quality = 0.5;
+                      const retryResult = canvas.toDataURL(mimeType, quality);
+                      const retrySize = Math.round(retryResult.length * 0.75);
+                      
+                      console.log('Retry compression:', {
+                        originalSize: formData.image.size,
+                        compressedSize: retrySize,
+                        quality: quality,
+                        dimensions: `${width}x${height}`,
+                        format: mimeType
+                      });
+
+                      if (retrySize > 200 * 1024) { // Si toujours trop grand
+                        // Dernier essai avec une qualité très basse
+                        quality = 0.4;
+                        const finalResult = canvas.toDataURL(mimeType, quality);
+                        const finalSize = Math.round(finalResult.length * 0.75);
+                        
+                        console.log('Final compression attempt:', {
+                          originalSize: formData.image.size,
+                          compressedSize: finalSize,
+                          quality: quality,
+                          dimensions: `${width}x${height}`,
+                          format: mimeType
+                        });
+
+                        if (finalSize > 200 * 1024) {
+                          // Si toujours trop grand, réduire encore les dimensions
+                          width = Math.round(width * 0.8);
+                          height = Math.round(height * 0.8);
+                          canvas.width = width;
+                          canvas.height = height;
+                          ctx.drawImage(img, 0, 0, width, height);
+                          
+                          const lastResult = canvas.toDataURL(mimeType, 0.4);
+                          const lastSize = Math.round(lastResult.length * 0.75);
+                          
+                          console.log('Last resort compression:', {
+                            originalSize: formData.image.size,
+                            compressedSize: lastSize,
+                            quality: 0.4,
+                            dimensions: `${width}x${height}`,
+                            format: mimeType
+                          });
+
+                          resolve(lastResult);
+                        } else {
+                          resolve(finalResult);
+                        }
+                      } else {
+                        resolve(retryResult);
+                      }
+                    } else {
+                      resolve(base64Result);
+                    }
+                  } catch (error) {
+                    console.error('Canvas error:', error);
+                    // En cas d'erreur, utiliser l'image originale
+                    resolve(base64);
+                  }
+                };
+                img.onerror = () => {
+                  console.error('Image load error');
+                  resolve(base64);
+                };
+                img.src = base64;
+              } catch (error) {
+                console.error('Base64 conversion error:', error);
+                reject(new Error('Erreur lors de la lecture de l\'image: ' + error.message));
+              }
+            };
+            reader.onerror = () => {
+              reject(new Error('Erreur lors de la lecture du fichier'));
+            };
+            reader.readAsDataURL(formData.image);
+          });
+
+          // Vérifier que la taille des données n'est pas trop grande
+          const dataSize = JSON.stringify(dataToSend).length;
+          console.log('Data size:', dataSize);
+          if (dataSize > 200 * 1024) { // Réduit à 200KB
+            throw new Error('Les données sont trop volumineuses après compression. Veuillez choisir une image plus petite ou réduire sa taille.');
+          }
+        } catch (error) {
+          console.error('Image processing error:', error);
+          throw new Error('Erreur lors du traitement de l\'image: ' + error.message);
+        }
+      } else if (formData.image) {
+        dataToSend.image = formData.image;
+      }
+
+      // Vérifier que les données sont valides avant l'envoi
+      if (!dataToSend.titre || !dataToSend.date) {
+        throw new Error('Veuillez remplir tous les champs obligatoires');
+      }
+
+      // Nettoyer les données avant l'envoi
+      Object.keys(dataToSend).forEach(key => {
+        if (dataToSend[key] === null || dataToSend[key] === undefined) {
+          delete dataToSend[key];
+        }
+      });
+
+      console.log('Sending data to:', url);
+      const dataSize = JSON.stringify(dataToSend).length;
+      console.log('Data size:', dataSize);
+
       const response = await fetch(url, {
         method,
         headers: { 
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(dataToSend)
       });
       
+      let responseData;
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+
+      if (!responseText) {
+        throw new Error('Le serveur n\'a pas renvoyé de réponse. Veuillez réessayer.');
+      }
+
+      try {
+        responseData = JSON.parse(responseText);
+        console.log('Server response:', responseData);
+      } catch (e) {
+        console.error('Error parsing JSON response:', e);
+        throw new Error('Erreur lors de la lecture de la réponse du serveur: ' + responseText);
+      }
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Erreur lors de la sauvegarde');
+        throw new Error(responseData.error || responseData.details || 'Erreur lors de la sauvegarde');
       }
-      
-      if (modalMode === 'add') {
-        setActualites(prev => [{
-          ...formData,
-          id: Date.now()
-        }, ...prev]);
-      } else {
-        setActualites(prev => prev.map(item => 
-          item.id === formData.id ? {...item, ...formData} : item
-        ));
-      }
+
+      // Rafraîchir la liste des actualités
+      const updatedResponse = await fetch('/actualites/api/admin');
+      if (!updatedResponse.ok) throw new Error('Erreur lors de la récupération des données');
+      const updatedData = await updatedResponse.json();
+      setActualites(updatedData);
       
       setShowFormModal(false);
-      setSuccessMessage(`Actualité ${modalMode === 'add' ? 'ajoutée' : 'modifiée'} avec succès!`);
+      setSuccessMessage(responseData.message || `Actualité ${modalMode === 'add' ? 'ajoutée' : 'modifiée'} avec succès!`);
       setTimeout(() => setSuccessMessage(''), 3000);
 
     } catch (error) {
@@ -150,6 +391,7 @@ const ActualitesList = () => {
       setTimeout(() => setError(''), 5000);
     } finally {
       setIsSubmitting(false);
+      setPreviewImage(null);
     }
   };
 
@@ -505,18 +747,18 @@ const ActualitesList = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {actualite.image ? (
-                          <img 
-                            src={actualite.image}
-                            alt="Actualité"
-                            className="h-10 w-10 rounded-lg object-cover"
-                            
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                            <FaImage className="h-5 w-5 text-gray-400" />
-                          </div>
-                        )}
+                        <div className="flex items-center text-sm text-gray-500">
+                          <FaImage className="w-4 h-4 mr-2 text-gray-400" />
+                          {actualite.image ? (
+                            <img
+                              src={actualite.image}
+                              alt={actualite.titre}
+                              className="w-12 h-12 object-cover rounded-lg"
+                            />  
+                          ) : (
+                            <span className="text-gray-400">Aucune image</span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -660,17 +902,78 @@ const ActualitesList = () => {
                   </div>
 
                   <div>
-                    <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">URL de l&apos;image *</label>
-                    <input
-                      type="text"
-                      id="image"
-                      name="image"
-                      value={formData.image}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                      required
-                      placeholder="https://example.com/image.jpg"
-                    />
+                    <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
+                      Sélectionner une image (PNG ou JPG) *
+                    </label>
+                    <div 
+                      className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-indigo-500 transition-all duration-300"
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      onDragEnter={(e) => e.preventDefault()}
+                      onDragLeave={(e) => e.preventDefault()}
+                    >
+                      <div className="space-y-1 text-center">
+                        {previewImage ? (
+                          <div className="relative group">
+                            <div className="relative w-72 h-48 overflow-hidden rounded-lg shadow-lg">
+                              <img
+                                src={previewImage}
+                                alt="Aperçu"
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleRemoveImage}
+                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-all duration-300"
+                                aria-label="Remove image"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <svg
+                              className="mx-auto h-12 w-12 text-gray-400"
+                              stroke="currentColor"
+                              fill="none"
+                              viewBox="0 0 48 48"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            <div className="flex text-sm text-gray-600 justify-center">
+                              <label
+                                htmlFor="image"
+                                className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                              >
+                                <span>Télécharger une image</span>
+                                <input
+                                  id="image"
+                                  name="image"
+                                  type="file"
+                                  accept="image/png, image/jpeg"
+                                  onChange={handleFileChange}
+                                  className="sr-only"
+                                  required={modalMode === 'add'}
+                                />
+                              </label>
+                              <p className="pl-1">ou glisser-déposer</p>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              PNG, JPG jusqu'à 3MB
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex items-center mt-4">
