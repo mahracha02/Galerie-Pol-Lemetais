@@ -246,7 +246,8 @@ const ExpoDetails = () => {
                       <img 
                         src={oeuvre.image_principale || '/placeholder-artwork.jpg'} 
                         alt={oeuvre.titre} 
-                        className="w-full h-[10rem] md:h-[15rem] lg:h-[20rem] object-cover"
+                        className="w-full h-[10rem] md:h-[15rem] lg:h-[20rem] object-contain p-2"
+                          style={{ aspectRatio: 'auto' }}
                       />
                       <h3 className="text-[1.5rem] md:text-[1.75rem] lg:text-[2rem] text-[#FFFFFF] uppercase break-words p-4" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>
                         {oeuvre.titre.split(' ')[0]} 

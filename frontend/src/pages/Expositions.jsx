@@ -173,11 +173,12 @@ const Expositions = () => {
                       className="flex flex-row border border-3 border-[#972924] overflow-hidden bg-white h-[18rem] md:h-[24rem] lg:h-[26rem] "
                     >
                       {/* Image */}
-                      <div className="w-2/5  h-full flex-shrink-0">
+                      <div className="w-2/5  h-full flex-shrink-0 flex items-center justify-center bg-gray-100 p-4">
                         <img
                           src={expo.image || '/placeholder-event.jpg'}
                           alt={expo.titre}
-                          className="object-container w-full h-full"
+                          className="object-contain max-h-full max-w-full"
+                          style={{ aspectRatio: 'auto' }}
                         />
                       </div>
                       {/* Info */}

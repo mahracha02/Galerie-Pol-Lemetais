@@ -264,11 +264,12 @@ const Evenements = () => {
                         transition={{ duration: 0.3 }}
                       >
                         <Link to={`/evenements/${event.id}`} className="absolute inset-0 z-10">
-                          <div className="h-[16rem] md:h-[20rem] lg:h-[20rem] overflow-hidden">
+                          <div className="h-[16rem] md:h-[20rem] lg:h-[20rem] overflow-hidden flex items-center justify-center bg-[#000000] p-2">
                             <img 
                               src={event.image || '/placeholder-event.jpg'} 
                               alt={event.titre} 
-                              className="w-full h-full object-container group-hover:opacity-80 transition duration-300"
+                              className="object-contain max-h-full max-w-full"
+                              style={{ aspectRatio: 'auto' }}
                             />
                           </div>
                           <div className="p-2 text-left relative p-4 flex flex-row gap-x-2 justify-between h-full">
