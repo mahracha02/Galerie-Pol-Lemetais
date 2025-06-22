@@ -7,7 +7,7 @@ nelmio_cors:
         expose_headers: ['Link']
         max_age: 3600
     paths:
-        '^/expositions/api': # Ajustez ce chemin à votre API
+        '^/admin/api': # Ajustez ce chemin à votre API
             allow_origin: ['*'] # En développement uniquement
             allow_headers: ['*']
             allow_methods: ['POST', 'PUT', 'GET', 'DELETE', 'OPTIONS']

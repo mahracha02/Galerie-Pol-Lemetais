@@ -27,6 +27,8 @@ import ContactsPage from './components/Admin/ContactsList.jsx';
 import NotFound from './pages/NotFound';
 import OeuvreDetails from './pages/OeuvreDetails.jsx';
 import ScrollToTop from './components/layout/ScrollToTop';
+import AdminSidebar from './components/Admin/AdminSidebar.jsx';
+import { useState, useEffect } from 'react';
 
 // Composant de protection des routes admin
 const ProtectedRoute = ({ children }) => {
@@ -38,77 +40,75 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const App = () => {
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('adminDarkMode') === 'false' ? false : true;
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    const handleMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'false' ? false : true);
+    };
+    window.addEventListener('storage', handleMode);
+    handleMode();
+    return () => window.removeEventListener('storage', handleMode);
+  }, []);
+
   return (
     <> 
       <Router>
         <ScrollToTop />
-        <div className="min-h-screen flex flex-col">
-          <Navbar />
-          <main className="flex-grow">
-            <Routes>
-              {/* Routes publiques */}
-              <Route path="/" element={<Home />} />
-              <Route path="/aPropos" element={<About />} />
-              <Route path="/expositions" element={<Expositions />} />
-              <Route path="/expositions/:id" element={<ExpoDetails />} />
-              <Route path="/evenements" element={<Evenements />} />
-              <Route path="/evenements/:id" element={<EvenementDetails />} />
-              <Route path="/artistes" element={<Artistes />} />
-              <Route path="/artistes/:id" element={<DetailsArtiste />} />
-              <Route path="/oeuvres/:id" element={<OeuvreDetails />} />
-              <Route path="/boutique" element={<Boutique />} />
-              <Route path="/boutique/catalogues" element={<Catalogues />} />
-              <Route path="/boutique/catalogues/:id" element={<DetailsCatalogue />} />
-              <Route path="/boutique/oeuvres/:id" element={<DetailsOeuvre />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/login" element={<Login />} />
+        <Routes>
+          {/* Admin routes: sidebar layout */}
+          <Route path="/admin/*" element={
+            <div className="min-h-screen flex bg-gray-50">
+              <AdminSidebar darkMode={darkMode} setDarkMode={setDarkMode} />
+              <main className="flex-1 ml-64">
+                <Routes>
+                  <Route path="" element={<ProtectedRoute><AdminDashboardPage darkMode={darkMode} /></ProtectedRoute>} />
+                  <Route path="actualites" element={<ProtectedRoute><ActualitesPage darkMode={darkMode} /></ProtectedRoute>} />
+                  <Route path="evenements" element={<ProtectedRoute><EvenementsPage darkMode={darkMode} /></ProtectedRoute>} />
+                  <Route path="expositions" element={<ProtectedRoute><ExpositionsPage darkMode={darkMode} /></ProtectedRoute>} />
+                  <Route path="artistes" element={<ProtectedRoute><ArtistesPage darkMode={darkMode} /></ProtectedRoute>} />
+                  <Route path="oeuvres" element={<ProtectedRoute><OeuvresPage darkMode={darkMode} /></ProtectedRoute>} />
+                  <Route path="utilisateurs" element={<ProtectedRoute><UsersPage darkMode={darkMode} /></ProtectedRoute>} />
+                  <Route path="contacts" element={<ProtectedRoute><ContactsPage darkMode={darkMode} /></ProtectedRoute>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+            </div>
+          } />
 
-              {/* Routes protégées */}
-              <Route path="/admin" element={
-                <ProtectedRoute>
-                  <AdminDashboardPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/actualites" element={
-                <ProtectedRoute>
-                  <ActualitesPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/evenements" element={
-                <ProtectedRoute>
-                  <EvenementsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/expositions" element={
-                <ProtectedRoute>
-                  <ExpositionsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/artistes" element={
-                <ProtectedRoute>
-                  <ArtistesPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/oeuvres" element={
-                <ProtectedRoute>
-                  <OeuvresPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/utilisateurs" element={
-                <ProtectedRoute>
-                  <UsersPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/admin/contacts" element={
-                <ProtectedRoute>
-                  <ContactsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+          {/* Public routes: navbar/footer layout */}
+          <Route path="*" element={
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <main className="flex-grow">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/aPropos" element={<About />} />
+                  <Route path="/expositions" element={<Expositions />} />
+                  <Route path="/expositions/:id" element={<ExpoDetails />} />
+                  <Route path="/evenements" element={<Evenements />} />
+                  <Route path="/evenements/:id" element={<EvenementDetails />} />
+                  <Route path="/artistes" element={<Artistes />} />
+                  <Route path="/artistes/:id" element={<DetailsArtiste />} />
+                  <Route path="/oeuvres/:id" element={<OeuvreDetails />} />
+                  <Route path="/boutique" element={<Boutique />} />
+                  <Route path="/boutique/catalogues" element={<Catalogues />} />
+                  <Route path="/boutique/catalogues/:id" element={<DetailsCatalogue />} />
+                  <Route path="/boutique/oeuvres/:id" element={<DetailsOeuvre />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+              <Footer />
+            </div>
+          } />
+        </Routes>
       </Router>
     </>
   );
