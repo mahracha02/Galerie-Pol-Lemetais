@@ -49,6 +49,10 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/admin/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
     }
   },
   optimizeDeps: {

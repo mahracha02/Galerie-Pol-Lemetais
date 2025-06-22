@@ -1,5 +1,5 @@
 // src/components/Admin/ExpositionsList.jsx
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaImage, FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaCalendarAlt, FaMapMarkerAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
 
@@ -24,6 +24,12 @@ const ExpositionsList = () => {
   const [previewImage, setPreviewImage] = useState(null);
   const [artistes, setArtistes] = useState([]);
   const [loadingArtistes, setLoadingArtistes] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('adminDarkMode') === 'false' ? false : true;
+    }
+    return true;
+  });
 
   // Form data
   const [formData, setFormData] = useState({
@@ -110,6 +116,15 @@ const ExpositionsList = () => {
   useEffect(() => {
     fetchExpositions();
     fetchArtistes();
+  }, []);
+
+  useEffect(() => {
+    const handleMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'false' ? false : true);
+    };
+    window.addEventListener('storage', handleMode);
+    handleMode();
+    return () => window.removeEventListener('storage', handleMode);
   }, []);
 
   const handleDelete = async (id) => {
@@ -611,7 +626,7 @@ const ExpositionsList = () => {
 
   // Render the component
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto relative">
+    <div className={`min-h-screen w-full ${darkMode ? 'bg-[#18181b] text-white' : 'bg-[#f7f7f7] text-[#18181b]'} p-0`} style={{ fontFamily: 'Poppins, sans-serif' }}>
       {/* Success Message */}
       {successMessage && (
         <div className="fixed top-4 right-4 z-50">
