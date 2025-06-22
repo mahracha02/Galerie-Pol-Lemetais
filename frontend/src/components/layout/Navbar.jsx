@@ -20,7 +20,7 @@ const Navbar = () => {
     { path: "/artistes", label: "Artistes" },
     { path: "/expositions", label: "Expositions" },
     { path: "/evenements", label: "Evénements" },
-    { path: "/shop", label: "Boutique" },
+    { path: "/boutique", label: "Boutique" },
     { path: "/contact", label: "Contact" },
   ];
 
