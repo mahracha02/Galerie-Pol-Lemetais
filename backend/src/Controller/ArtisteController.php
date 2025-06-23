@@ -88,7 +88,7 @@ final class ArtisteController extends AbstractController{
         ]);
     }
 
-    #[Route('/api', name: 'api_artiste')]
+    #[Route('/api', name: 'api_artiste' , methods: ['GET'])]
     public function api(ArtisteRepository $artistesRepository): Response
     {
         $artistes = $artistesRepository->findBy(['published' => true]);
@@ -98,7 +98,7 @@ final class ArtisteController extends AbstractController{
                 'id' => $artiste->getId(),
                 'nom' => $artiste->getNom(),
                 'bio' => $artiste->getBio(),
-                'photo' => $this->getPhotoUrl($artiste->getPhoto()),
+                'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                 'date_naissance' => $artiste->getDateNaissance() ? $artiste->getDateNaissance()->format('Y-m-d') : null,
                 'date_deces' => $artiste->getDateDeces() ? $artiste->getDateDeces()->format('Y-m-d') : null,
                 'pays' => $artiste->getPays(),
@@ -116,7 +116,7 @@ final class ArtisteController extends AbstractController{
             'id' => $artiste->getId(),
             'nom' => $artiste->getNom(),
             'bio' => $artiste->getBio(),
-            'photo' => $this->getPhotoUrl($artiste->getPhoto()),
+            'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
             'date_naissance' => $artiste->getDateNaissance()->format('Y-m-d'),
             'date_deces' => $artiste->getDateDeces() ? $artiste->getDateDeces()->format('Y-m-d') : null,
             'pays' => $artiste->getPays(),
@@ -124,7 +124,7 @@ final class ArtisteController extends AbstractController{
                 return [
                     'id' => $media->getId(),
                     'titre' => $media->getTitre(),
-                    'image' => $this->getParameter('app.base_url') . "photos/" . $media->getImage(),
+                    'image' => $this->getPhotoUrl($media->getImage(), 'medias'),
                     'link_url' => $media->getLinkUrl(),
                 ];
             }, $artiste->getMedias()->toArray()),
@@ -136,18 +136,18 @@ final class ArtisteController extends AbstractController{
                     'annee' => $expo->getAnnee(),
                     'date_debut' => $expo->getDateDebut() ? $expo->getDateDebut()->format('Y-m-d') : null,
                     'date_fin' => $expo->getDateFin() ? $expo->getDateFin()->format('Y-m-d') : null,
-                    'image' => $this->getParameter('app.base_url') . "photos/" . $expo->getImage(),
+                    'image' => $this->getPhotoUrl($expo->getImage(), 'expositions'),
                     'visite_virtuelle_url' => $expo->getVisiteVirtuelleUrl(),
                     'artiste_principal' => $expo->getArtistePrincipal() ? [
                         'id' => $expo->getArtistePrincipal()->getId(),
                         'nom' => $expo->getArtistePrincipal()->getNom(),
-                        'photo' => $this->getParameter('app.base_url')."photos/" . $expo->getArtistePrincipal()->getPhoto(),
+                        'photo' => $this->getPhotoUrl($expo->getArtistePrincipal()->getPhoto(), 'artistes'),
                     ] : null,
                     'artistes' => array_map(function ($artiste) {
                         return [
                             'id' => $artiste->getId(),
                             'nom' => $artiste->getNom(),
-                            'photo' => $this->getParameter('app.base_url')."photos/" . $artiste->getPhoto(),
+                            'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                         ];
                     }, $expo->getArtists()->toArray()),
                 ];
@@ -160,18 +160,18 @@ final class ArtisteController extends AbstractController{
                     'annee' => $expo->getAnnee(),
                     'date_debut' => $expo->getDateDebut() ? $expo->getDateDebut()->format('Y-m-d') : null,
                     'date_fin' => $expo->getDateFin() ? $expo->getDateFin()->format('Y-m-d') : null,
-                    'image' => $this->getParameter('app.base_url') . "photos/" . $expo->getImage(),
+                    'image' => $this->getPhotoUrl($expo->getImage(), 'expositions'),
                     'visite_virtuelle_url' => $expo->getVisiteVirtuelleUrl(),
                     'artiste_principal' => $expo->getArtistePrincipal() ? [
                         'id' => $expo->getArtistePrincipal()->getId(),
                         'nom' => $expo->getArtistePrincipal()->getNom(),
-                        'photo' => $this->getParameter('app.base_url')."photos/" . $expo->getArtistePrincipal()->getPhoto(),
+                        'photo' => $this->getPhotoUrl($expo->getArtistePrincipal()->getPhoto(), 'artistes'),
                     ] : null,
                     'artistes' => array_map(function ($artiste) {
                         return [
                             'id' => $artiste->getId(),
                             'nom' => $artiste->getNom(),
-                            'photo' => $this->getParameter('app.base_url')."photos/" . $artiste->getPhoto(),
+                            'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                         ];
                     }, $expo->getArtists()->toArray()),
                 ];
@@ -181,7 +181,7 @@ final class ArtisteController extends AbstractController{
                     'id' => $oeuvre->getId(),
                     'titre' => $oeuvre->getTitre(),
                     'description' => $oeuvre->getDescription(),
-                    'image_principale' => $this->getParameter('app.base_url') . "photos/" . $oeuvre->getImagePrincipale(),
+                    'image_principale' => $this->getPhotoUrl($oeuvre->getImagePrincipale(), 'oeuvres'),
                     'stock' => $oeuvre->getStock(),
                     'prix' => $oeuvre->getPrix(),
                 ];
@@ -199,7 +199,7 @@ final class ArtisteController extends AbstractController{
                 'id' => $artiste->getId(),
                 'nom' => $artiste->getNom(),
                 'bio' => $artiste->getBio(),
-                'photo' => $this->getPhotoUrl($artiste->getPhoto()),
+                'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                 'date_naissance' => $artiste->getDateNaissance() ? $artiste->getDateNaissance()->format('Y-m-d') : null,
                 'date_deces' => $artiste->getDateDeces() ? $artiste->getDateDeces()->format('Y-m-d') : null,
                 'pays' => $artiste->getPays(),
@@ -251,7 +251,7 @@ final class ArtisteController extends AbstractController{
                 'id' => $artiste->getId(),
                 'nom' => $artiste->getNom(),
                 'bio' => $artiste->getBio(),
-                'photo' => $this->getPhotoUrl($artiste->getPhoto()),
+                'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                 'date_naissance' => $artiste->getDateNaissance() ? $artiste->getDateNaissance()->format('Y-m-d') : null,
                 'date_deces' => $artiste->getDateDeces() ? $artiste->getDateDeces()->format('Y-m-d') : null,
                 'pays' => $artiste->getPays(),
@@ -315,7 +315,7 @@ final class ArtisteController extends AbstractController{
                 'id' => $artiste->getId(),
                 'nom' => $artiste->getNom(),
                 'bio' => $artiste->getBio(),
-                'photo' => $this->getPhotoUrl($artiste->getPhoto()),
+                'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                 'date_naissance' => $artiste->getDateNaissance() ? $artiste->getDateNaissance()->format('Y-m-d') : null,
                 'date_deces' => $artiste->getDateDeces() ? $artiste->getDateDeces()->format('Y-m-d') : null,
                 'pays' => $artiste->getPays(),
@@ -350,7 +350,7 @@ final class ArtisteController extends AbstractController{
         }
     }
 
-    private function getPhotoUrl($photoPath): string
+    private function getPhotoUrl($photoPath, string $folder): string
     {
         if (!$photoPath) {
             return '';
@@ -361,7 +361,10 @@ final class ArtisteController extends AbstractController{
             return $photoPath;
         }
         
+        
         // Otherwise, construct the full URL
-        return $this->getParameter('app.base_url') . "uploads/artistes/" . $photoPath;
+        return $this->getParameter('app.base_url') . "uploads/" . $folder . "/" . $photoPath;
     }
+
+    
 }
