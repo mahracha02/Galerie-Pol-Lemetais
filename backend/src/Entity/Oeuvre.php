@@ -61,6 +61,9 @@ class Oeuvre
     #[ORM\ManyToMany(targetEntity: evenement::class, inversedBy: 'oeuvres')]
     private Collection $evenement;
 
+    #[ORM\Column]
+    private ?bool $published = null;
+
     public function __construct()
     {
         $this->evenement = new ArrayCollection();
@@ -238,6 +241,18 @@ class Oeuvre
     public function removeEvenement(evenement $evenement): static
     {
         $this->evenement->removeElement($evenement);
+
+        return $this;
+    }
+
+    public function isPublished(): ?bool
+    {
+        return $this->published;
+    }
+
+    public function setPublished(bool $published): static
+    {
+        $this->published = $published;
 
         return $this;
     }

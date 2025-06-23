@@ -104,7 +104,13 @@ const DetailsArtiste = () => {
     );
   }
 
-  const displayedOeuvres = showAllOeuvres ? artiste.oeuvres : artiste.oeuvres.slice(0, 8);
+  const oeuvresArray = Array.isArray(artiste.oeuvres)
+    ? artiste.oeuvres
+    : artiste.oeuvres
+      ? Object.values(artiste.oeuvres)
+      : [];
+  const displayedOeuvres = showAllOeuvres ? oeuvresArray : oeuvresArray.slice(0, 8);
+  console.log('Displayed Oeuvres:', displayedOeuvres);
 
   // Split name for color styling
   const [prenom, ...nomRest] = artiste.nom ? artiste.nom.split(' ') : [''];
