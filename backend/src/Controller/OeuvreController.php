@@ -7,8 +7,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Request;
-use app\Entity\Oeuvre;
-use app\Entity\Artiste;
+use App\Entity\Oeuvre;
+use App\Entity\Artiste;
+use App\Entity\Evenement;
+use App\Entity\Exposition;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
@@ -154,7 +156,7 @@ final class OeuvreController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/api', name: 'api_oeuvres')]
+    #[Route('/admin/api', name: 'api_oeuvres' , methods: ['GET'])]
     public function getAllOeuvres(OeuvreRepository $oeuvreRepository): Response
     {
         $oeuvres = $oeuvreRepository->findAll();
@@ -178,6 +180,18 @@ final class OeuvreController extends AbstractController
                     'nom' => $oeuvre->getArtiste()->getNom(),
                     'photo' => $this->getPhotoUrl($oeuvre->getArtiste()->getPhoto(), 'artistes'),
                 ],
+                'expositions' => $oeuvre->getExposition() ? [
+                    'id' => $oeuvre->getExposition()->getId(),
+                    'titre' => $oeuvre->getExposition()->getTitre(),
+                    'date_debut' => $oeuvre->getExposition()->getDateDebut(),
+                    'date_fin' => $oeuvre->getExposition()->getDateFin(),
+                ] : null,
+                'evenements' => array_map(function ($evenement) {
+                    return [
+                        'id' => $evenement->getId(),
+                        'titre' => $evenement->getTitre(),
+                    ];
+                }, $oeuvre->getEvenement()->toArray()),
                 'stock' => $oeuvre->getStock(),
                 'prix' => $oeuvre->getPrix(),
                 'published' => $oeuvre->isPublished(),
@@ -269,9 +283,9 @@ final class OeuvreController extends AbstractController
     
 
         // Gestion de l'artiste principal
-        if (!empty($data['artiste'])) {
-            if (is_numeric($data['artiste'])) {
-                $artiste = $em->getRepository(Artiste::class)->find($data['artiste']);
+        if (!empty($data['artiste_id'])) {
+            if (is_numeric($data['artiste_id'])) {
+                $artiste = $em->getRepository(Artiste::class)->find($data['artiste_id']);
                 if ($artiste) {
                     $oeuvre->setArtiste($artiste);
                 }
@@ -281,6 +295,24 @@ final class OeuvreController extends AbstractController
                 $artiste->setNom($data['artiste']);
                 $em->persist($artiste);
                 $oeuvre->setArtiste($artiste);
+            }
+        }
+
+        // Gestion de l'exposition
+        if (!empty($data['exposition_id'])) {
+            $exposition = $em->getRepository(Exposition::class)->find($data['exposition_id']);
+            if ($exposition) {
+                $oeuvre->setExposition($exposition);
+            }
+        }
+
+        // Gestion des événements
+        if (!empty($data['evenements'])) {
+            foreach ($data['evenements'] as $evenementId) {
+                $evenement = $em->getRepository(Evenement::class)->find($evenementId);
+                if ($evenement) {
+                    $oeuvre->getEvenement()->add($evenement);
+                }
             }
         }
 
@@ -364,15 +396,12 @@ final class OeuvreController extends AbstractController
                 }
             }
             $oeuvre->setImagesSecondaires(implode(',', $images));
-        } else if (array_key_exists('images_secondaires', $data)) {
-            // If the key exists but is empty, clear the field
-            $oeuvre->setImagesSecondaires('');
         }
 
         // Handle artiste principal
-        if (!empty($data['artiste'])) {
-            if (is_numeric($data['artiste'])) {
-                $artiste = $this->entityManager->getRepository(Artiste::class)->find($data['artiste']);
+        if (!empty($data['artiste_id'])) {
+            if (is_numeric($data['artiste_id'])) {
+                $artiste = $this->entityManager->getRepository(Artiste::class)->find($data['artiste_id']);
                 if ($artiste) {
                     $oeuvre->setArtiste($artiste);
                 }
@@ -383,6 +412,33 @@ final class OeuvreController extends AbstractController
                 $this->entityManager->persist($artiste);
                 $oeuvre->setArtiste($artiste);
             }   
+        }
+
+        // Handle exposition
+        if (!empty($data['exposition_id'])) {
+            $exposition = $this->entityManager->getRepository(Exposition::class)->find($data['exposition_id']);
+            if ($exposition) {
+                $oeuvre->setExposition($exposition);
+            } else {
+                $oeuvre->setExposition(null); // Clear exposition if not found
+            }
+        } else if (array_key_exists('exposition', $data)) {
+            // If the key exists 
+            $oeuvre->setExposition($data['exposition']);
+        }
+
+        // Handle evenements
+        if (!empty($data['evenements'])) {
+            $oeuvre->getEvenement()->clear(); // Clear existing events
+            foreach ($data['evenements'] as $evenementId) {
+                $evenement = $this->entityManager->getRepository(Evenement::class)->find($evenementId);
+                if ($evenement) {
+                    $oeuvre->getEvenement()->add($evenement);
+                }
+            }
+        } else if (array_key_exists('evenements', $data)) {
+            // If the key exists but is empty, clear the events field
+            $oeuvre->getEvenement()->clear();
         }
         $em->persist($oeuvre);
         $em->flush();
