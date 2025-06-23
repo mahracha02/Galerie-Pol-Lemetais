@@ -183,12 +183,11 @@ const Artistes = () => {
                       transition={{ duration: 0.3 }}
                     >
                       <Link to={`/artistes/${artist.id}`} className="absolute inset-0 z-10">
-                        <div className="h-[12rem] sm:h-[12rem] md:h-[14rem] lg:h-[16rem] overflow-hidden flex items-center justify-center bg-[#000000] p-2">
+                        <div className="h-[12rem] sm:h-[12rem] md:h-[14rem] lg:h-[16rem] overflow-hidden bg-black">
                           <img 
                             src={artist.photo} 
                             alt={artist.nom} 
-                            className="object-contain max-h-full max-w-full"
-                            style={{ aspectRatio: 'auto' }}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                         </div>
                         <div className="p-2 md:p-3 text-left relative mt-1 ml-1">

@@ -84,6 +84,9 @@ class Artiste
     #[ORM\OneToMany(targetEntity: Medias::class, mappedBy: 'artiste')]
     private Collection $medias;
 
+    #[ORM\Column]
+    private ?bool $published = null;
+
     public function __construct()
     {
         $this->events = new ArrayCollection();
@@ -381,6 +384,18 @@ class Artiste
                 $media->setArtiste(null);
             }
         }
+
+        return $this;
+    }
+
+    public function isPublished(): ?bool
+    {
+        return $this->published;
+    }
+
+    public function setPublished(bool $published): static
+    {
+        $this->published = $published;
 
         return $this;
     }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaNewspaper, FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaCalendarAlt, FaImage, FaEye, FaEyeSlash } from 'react-icons/fa';
 
-const ActualitesList = () => {
+const ActualitesList = ({darkMode}) => {
   // State management
   const [actualites, setActualites] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,22 +34,6 @@ const ActualitesList = () => {
   const [actualiteToDelete, setActualiteToDelete] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-
-  // Light/Dark mode
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('adminDarkMode') === 'false' ? false : true;
-    }
-    return true;
-  });
-  useEffect(() => {
-    const handleMode = () => {
-      setDarkMode(localStorage.getItem('adminDarkMode') === 'false' ? false : true);
-    };
-    window.addEventListener('storage', handleMode);
-    handleMode();
-    return () => window.removeEventListener('storage', handleMode);
-  }, []);
 
   // Fetch actualités
   useEffect(() => {
@@ -526,7 +510,7 @@ const ActualitesList = () => {
     });
 
   return (
-    <div className={`min-h-screen w-full ${darkMode ? 'bg-[#18181b] text-white' : 'bg-[#f7f7f7] text-[#18181b]'} p-0`} style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div className="p-6 md:p-8 max-w-7xl mx-auto relative">
       {/* Success Message */}
       {successMessage && (
         <div className="fixed top-4 right-4 z-50">
