@@ -110,7 +110,7 @@ final class ArtisteController extends AbstractController{
     }
 
     #[Route('/api/{id}', name: 'app_artiste_show', methods: ['GET'])]
-    public function show(Artiste $artiste): Response
+    public function show(Artiste $artiste, ArtisteRepository $artistesRepository): Response
     {
         return $this->json([
             'id' => $artiste->getId(),
@@ -185,7 +185,9 @@ final class ArtisteController extends AbstractController{
                     'stock' => $oeuvre->getStock(),
                     'prix' => $oeuvre->getPrix(),
                 ];
-            }, $artiste->getOeuvres()->toArray()),
+            }, array_filter($artiste->getOeuvres()->toArray(), function ($oeuvre) {
+                return $oeuvre->isPublished();
+            })),
         ]);
     }
 

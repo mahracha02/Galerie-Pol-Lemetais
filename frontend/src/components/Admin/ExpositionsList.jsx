@@ -696,9 +696,22 @@ const handleTogglePublish = async (expo) => {
                                     <a href={expo.visite_virtuelle_url} target="_blank" rel="noopener noreferrer" className={`text-blue-600 hover:underline ${darkMode ? 'text-blue-400' : ''}`}>Visite virtuelle</a>
                                 ) : 'N/A'}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap"><button onClick={() => handleTogglePublish(expo)} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 hover:scale-110 ${expo.published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`} title={expo.published ? 'Cliquer pour dépublier' : 'Cliquer pour publier'}>
-                                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="flex items-center">{expo.published ? <FaEye className="w-3 h-3 mr-1" /> : <FaEyeSlash className="w-3 h-3 mr-1" />}{expo.published ? 'Publié' : 'Non publié'}</motion.div>
-                            </button></td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <button 
+                                  onClick={() => handleTogglePublish(expo)} 
+                                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 hover:scale-110 ${expo.published ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`} 
+                                  title={expo.published ? 'Cliquer pour dépublier' : 'Cliquer pour publier'}>
+                                <motion.div 
+                                  whileHover={{ scale: 1.1 }} 
+                                  whileTap={{ scale: 0.9 }} 
+                                  className="flex items-center">
+                                    {expo.published ? 
+                                      <FaEye className="w-3 h-3 mr-1" /> : 
+                                        <FaEyeSlash className="w-3 h-3 mr-1" />}
+                                        {expo.published ? 'Publié' : 'Non publié'}
+                                </motion.div>
+                              </button>
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><div className="flex justify-end space-x-3">
                                 <button onClick={() => handleEditClick(expo)} className={`transition-colors duration-200 flex items-center ${darkMode ? 'text-green-400 hover:text-green-200' : 'text-green-600 hover:text-green-900'}`}><FaEdit className="w-4 h-4 mr-1" />Éditer</button>
                                 <button onClick={() => handleDelete(expo.id)} className={`transition-colors duration-200 flex items-center ${darkMode ? 'text-red-400 hover:text-red-200' : 'text-red-600 hover:text-red-900'}`}><FaTrash className="w-4 h-4 mr-1" />Supprimer</button>
