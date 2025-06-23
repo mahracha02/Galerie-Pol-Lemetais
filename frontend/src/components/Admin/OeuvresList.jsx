@@ -21,6 +21,8 @@ const OeuvresList = ({ darkMode }) => {
   const [previewSecondaryImages, setPreviewSecondaryImages] = useState([]);
   const [artistes, setArtistes] = useState([]);
   const [expositions, setExpositions] = useState([]);
+  const [evenements, setEvenements] = useState([]);
+
 
   // Form data
   const [formData, setFormData] = useState({
@@ -35,13 +37,15 @@ const OeuvresList = ({ darkMode }) => {
     images_secondaires: [],
     artiste_id: '',
     exposition_id: '',
-    published: false
+    published: false,
+    evenements: []
   });
 
   useEffect(() => {
     fetchOeuvres();
     fetchArtistes();
     fetchExpositions();
+    fetchEvenements();
   }, []);
 
   const fetchOeuvres = async () => {
@@ -87,6 +91,18 @@ const OeuvresList = ({ darkMode }) => {
       setExpositions(data);
     } catch (error) {
       setError('Impossible de charger la liste des expositions');
+      console.error(error);
+    }
+  };
+
+  const fetchEvenements = async () => {
+    try {
+      const response = await fetch('/evenements/admin/api');
+      if (!response.ok) throw new Error('Erreur lors de la récupération des événements');
+      const data = await response.json();
+      setEvenements(data);
+    } catch (error) {
+      setError('Impossible de charger la liste des événements');
       console.error(error);
     }
   };
@@ -215,7 +231,8 @@ const OeuvresList = ({ darkMode }) => {
       images_secondaires: [],
       artiste_id: '',
       exposition_id: '',
-      published: false
+      published: false,
+      evenements: []
     });
     setPreviewImage(null);
     setPreviewSecondaryImages([]);
@@ -238,9 +255,12 @@ const OeuvresList = ({ darkMode }) => {
       prix: oeuvre.prix,
       image_principale: oeuvre.image_principale,
       images_secondaires: oeuvre.images_secondaires || [],
-      artiste_id: oeuvre.artiste_id?.id || oeuvre.artiste_id || '',
-      exposition_id: oeuvre.exposition_id?.id || oeuvre.exposition_id || '',
-      published: oeuvre.published || false
+      artiste_id: oeuvre.artiste?.id || oeuvre.artiste_id?.id || oeuvre.artiste_id || '',
+      exposition_id: oeuvre.expositions?.id || oeuvre.exposition_id?.id || oeuvre.exposition_id || '',
+      published: oeuvre.published || false,
+      evenements: Array.isArray(oeuvre.evenements)
+        ? oeuvre.evenements.map(ev => (ev.id ? String(ev.id) : String(ev)))
+        : []
     });
     setPreviewImage(oeuvre.image_principale || null);
     setPreviewSecondaryImages(oeuvre.images_secondaires || []);
@@ -344,10 +364,11 @@ const OeuvresList = ({ darkMode }) => {
       artiste_id: formData.artiste_id,
       exposition_id: formData.exposition_id,
       published: formData.published,
+      evenements: formData.evenements
     };
 
     try {
-      const url = modalMode === 'add' ? '/oeuvres/admin/api/' : `/oeuvres/admin/api/${formData.id}`;
+      const url = modalMode === 'add' ? '/oeuvres/admin/api' : `/oeuvres/admin/api/${formData.id}`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
 
       const response = await fetch(url, {
@@ -435,17 +456,17 @@ const OeuvresList = ({ darkMode }) => {
             <div className="flex-1 relative">
               <input
                 type="text"
-                placeholder="Rechercher une œuvre..."
+                placeholder="Rechercher un artiste..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className={`w-full pl-10 pr-4 py-2 rounded-lg border ${darkMode ? 'border-gray-700' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                className={`w-full pl-10 pr-4 py-2 rounded-lg border ${darkMode ? 'border-gray-700 bg-[#232326] text-white' : 'border-gray-200 bg-white text-[#18181b]'} focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
               />
-              <FaSearch className="absolute left-3 top-3 text-gray-400" />
+              <FaSearch className={`absolute left-3 top-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
             </div>
             
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 bg-white ${darkMode ? 'border-gray-700' : 'border-gray-200'} rounded-lg hover:bg-gray-50 transition-colors duration-200 flex items-center`}
+              className={`px-4 py-2 border rounded-lg transition-colors duration-200 flex items-center ${darkMode ? 'bg-[#232326] border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'}`}
             >
               <FaFilter className="w-4 h-4 mr-2" />
               Filtres
@@ -453,40 +474,61 @@ const OeuvresList = ({ darkMode }) => {
           </div>
 
           {showFilters && (
-            <div className={`bg-white ${darkMode ? 'bg-[#232326]' : ''} p-4 rounded-lg shadow-sm border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`p-4 rounded-lg shadow-sm border mt-4 ${darkMode ? 'bg-[#232326] border-gray-700' : 'bg-white border-gray-200'}`}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Statut de publication</label>
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Statut de publication</label>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className={`w-full rounded-lg border ${darkMode ? 'bg-[#18181b] border-gray-600' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                   >
                     <option value="all">Tous les statuts</option>
-                    <option value="published">Publiées</option>
-                    <option value="unpublished">Non publiées</option>
+                    <option value="published">Publiés</option>
+                    <option value="unpublished">Non publiés</option>
                   </select>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
 
-        {/* Bulk Actions */}
-        {selectedOeuvres.length > 0 && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
-            <span className="text-green-800">
-              {selectedOeuvres.length} œuvre{selectedOeuvres.length > 1 ? 's' : ''} sélectionnée{selectedOeuvres.length > 1 ? 's' : ''}
-            </span>
-            <button
-              onClick={handleBulkDelete}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 flex items-center"
-            >
-              <FaTrash className="w-4 h-4 mr-2" />
-              Supprimer la sélection
-            </button>
-          </div>
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`mb-6 p-4 rounded-lg ${darkMode ? 'bg-red-900 text-red-200 border border-red-700' : 'bg-red-50 text-red-600 border border-red-200'}`}
+          >
+            {error}
+          </motion.div>
         )}
+
+        <AnimatePresence>
+          {selectedOeuvres.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className={`mb-6 p-4 rounded-lg flex items-center justify-between ${darkMode ? 'bg-green-900 border border-green-700 text-green-200' : 'bg-green-50 border border-green-200 text-green-800'}`}
+            >
+              <span className="font-medium">
+                {selectedOeuvres.length} œuvre{selectedOeuvres.length > 1 ? 's' : ''} sélectionnée{selectedOeuvres.length > 1 ? 's' : ''}
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 flex items-center"
+              >
+                <FaTrash className="w-4 h-4 mr-2" />
+                Supprimer la sélection
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Oeuvres Table */}
         {isLoading ? (
@@ -499,10 +541,10 @@ const OeuvresList = ({ darkMode }) => {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className={`bg-white ${darkMode ? 'dark:bg-[#232326] dark:text-white' : ''} rounded-xl shadow-md overflow-hidden`}>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className={`min-w-full divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                <thead className={darkMode ? 'bg-[#18181b]' : 'bg-gray-50'}>
                   <tr>
                     <th className="px-6 py-4">
                       <input
@@ -574,6 +616,27 @@ const OeuvresList = ({ darkMode }) => {
                     </th>
                     <th 
                       className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
+                    >
+                      <div className="flex items-center">
+                        Artiste
+                      </div>
+                    </th>
+                    <th 
+                      className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
+                    >
+                      <div className="flex items-center">
+                        Exposition
+                      </div>
+                    </th>
+                    <th 
+                      className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
+                    >
+                      <div className="flex items-center">
+                        Événements
+                      </div>
+                    </th>
+                    <th 
+                      className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700"
                       onClick={() => handleSort('stock')}
                     >
                       <div className="flex items-center">
@@ -602,13 +665,11 @@ const OeuvresList = ({ darkMode }) => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className={darkMode ? 'bg-[#232326] divide-y divide-gray-700' : 'bg-white divide-y divide-gray-200' } >
                   {filteredOeuvres.map((oeuvre) => (
-                    <tr 
-                      key={oeuvre.id} 
-                      className={`hover:bg-gray-50 transition-colors duration-150 ${
-                        selectedOeuvres.includes(oeuvre.id) ? 'bg-green-50' : ''
-                      }`}
+                    <tr
+                      key={oeuvre.id}
+                      className={`transition-colors duration-150 ${selectedOeuvres.includes(oeuvre.id) ? (darkMode ? 'bg-green-900' : 'bg-green-50') : ''} ${darkMode ? 'hover:bg-[#18181b]' : 'hover:bg-gray-50'} `}
                     >
                       <td className="px-6 py-4">
                         <input
@@ -624,8 +685,8 @@ const OeuvresList = ({ darkMode }) => {
                             <FaPalette className="h-5 w-5 text-green-600" />
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{oeuvre.titre}</div>
-                            <div className="text-sm text-gray-500">{oeuvre.technique}</div>
+                            <div className={`text-sm font-medium text-gray-900 ${darkMode ? 'text-white' : ''}`}>{oeuvre.titre}</div>
+                            <div className={`text-sm text-gray-500 ${darkMode ? 'text-gray-400' : ''}`}>{oeuvre.technique}</div>
                           </div>
                         </div>
                       </td>
@@ -686,6 +747,30 @@ const OeuvresList = ({ darkMode }) => {
                         <div className="text-sm text-gray-500">{oeuvre.remarque}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500 rounded-full px-2 py-1 bg-blue-200">{oeuvre.artiste?.nom}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500 rounded-full px-2 py-1 bg-yellow-200">{oeuvre.expositions?.titre || 'Aucune'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          {oeuvre.evenements && oeuvre.evenements.length > 0 ? (
+                            oeuvre.evenements.map((evenement, index) => (
+                              <span
+                                key={evenement.id || index}
+                                className="bg-[#972924] text-white px-3 py-1 rounded-full text-xs font-semibold"
+                              >
+                                {typeof evenement === 'object' ? evenement.titre : evenement}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="bg-[#972924] text-white px-3 py-1 rounded-full text-xs font-semibold">
+                              Aucun événement
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">{oeuvre.stock}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -731,8 +816,8 @@ const OeuvresList = ({ darkMode }) => {
                   ))}
                   {filteredOeuvres.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center">
-                        <div className="text-gray-400 flex flex-col items-center">
+                      <td colSpan={9} className={`px-6 py-12 text-center ${darkMode ? 'bg-[#232326] text-gray-500' : ''}`}>
+                        <div className={`${darkMode ? 'text-gray-500' : 'text-gray-400'} flex flex-col items-center`}>
                           <FaPalette className="w-12 h-12 mb-4" />
                           <p className="text-lg">Aucune œuvre trouvée</p>
                           <p className="text-sm mt-1">
@@ -770,11 +855,16 @@ const OeuvresList = ({ darkMode }) => {
               >
                 {/* Modal header */}
                 <div className={`p-6 rounded-t-xl ${darkMode ? 'bg-[#0C0C0C]' : 'bg-gray-50'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}> 
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-bold" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>{modalMode === 'add' ? 'Ajouter une œuvre' : 'Modifier une œuvre'}</h3>
+                  <div className="flex items-center gap-3">
+                    <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${darkMode ? 'bg-[#972924]' : 'bg-[#972924]'}`}> 
+                      <FaPalette className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold" style={{ fontFamily: 'Kenyan Coffee, sans-serif' }}>{modalMode === 'add' ? 'Ajouter une œuvre' : 'Modifier une œuvre'}</h3>
+                    </div>
                     <button
                       onClick={() => setShowFormModal(false)}
-                      className={`rounded-full p-2 ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
+                      className={`${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'} transition-colors ml-auto`}
                       disabled={isSubmitting}
                     >
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -867,17 +957,39 @@ const OeuvresList = ({ darkMode }) => {
                     </div>
                     <div>
                       <label htmlFor="image_principale" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Image principale (PNG ou JPG) *</label>
+                      <div
+                        className={`mt-1 flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200 ${darkMode ? 'border-gray-700 bg-[#18181b] hover:border-[#972924]' : 'border-gray-300 bg-white hover:border-[#972924]'}`}
+                        style={{ minHeight: '120px', position: 'relative' }}
+                        onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
+                        onDrop={e => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const file = e.dataTransfer.files[0];
+                          console.log('Main image drop event', e.dataTransfer.files);
+                          if (file) handleMainImageChange({ target: { files: [file] } });
+                        }}
+                      >
+                        <span className="text-xs mb-2">Glissez-déposez ou cliquez pour sélectionner une image principale</span>
+                        <button
+                          type="button"
+                          onClick={e => {
+                            e.stopPropagation();
+                            document.getElementById('main-image-input').click();
+                          }}
+                          className={`px-3 py-1 rounded bg-[#972924] text-white text-xs mt-2`}
+                        >Choisir un fichier</button>
+                      </div>
                       <input
                         type="file"
-                        id="image_principale"
+                        id="main-image-input"
                         name="image_principale"
                         accept="image/png, image/jpeg"
                         onChange={handleMainImageChange}
-                        className={`mt-1 block w-full text-sm rounded-lg border ${darkMode ? 'bg-[#0C0C0C] border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'} cursor-pointer focus:outline-none p-3`}
+                        className="hidden"
                         required={modalMode === 'add'}
                       />
                       {previewImage && (
-                        <div className="mt-2 relative group">
+                        <div className="mt-2 relative group w-full flex justify-center">
                           <img src={previewImage} alt="Aperçu" className="max-h-40 rounded-lg shadow object-contain" />
                           <button type="button" onClick={handleRemoveMainImage} className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover:opacity-100"><FaTrash className="w-4 h-4" /></button>
                         </div>
@@ -885,17 +997,39 @@ const OeuvresList = ({ darkMode }) => {
                     </div>
                     <div>
                       <label htmlFor="images_secondaires" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Images secondaires (PNG ou JPG)</label>
+                      <div
+                        className={`mt-1 flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200 ${darkMode ? 'border-gray-700 bg-[#18181b] hover:border-[#972924]' : 'border-gray-300 bg-white hover:border-[#972924]'}`}
+                        style={{ minHeight: '120px', position: 'relative' }}
+                        onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
+                        onDrop={e => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const files = Array.from(e.dataTransfer.files);
+                          console.log('Secondary images drop event', e.dataTransfer.files);
+                          if (files.length > 0) handleSecondaryImagesChange({ target: { files } });
+                        }}
+                      >
+                        <span className="text-xs mb-2">Glissez-déposez ou cliquez pour sélectionner des images secondaires</span>
+                        <button
+                          type="button"
+                          onClick={e => {
+                            e.stopPropagation();
+                            document.getElementById('secondary-images-input').click();
+                          }}
+                          className={`px-3 py-1 rounded bg-[#972924] text-white text-xs mt-2`}
+                        >Choisir des fichiers</button>
+                      </div>
                       <input
                         type="file"
-                        id="images_secondaires"
+                        id="secondary-images-input"
                         name="images_secondaires"
                         accept="image/png, image/jpeg"
                         onChange={handleSecondaryImagesChange}
                         multiple
-                        className={`mt-1 block w-full text-sm rounded-lg border ${darkMode ? 'bg-[#0C0C0C] border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'} cursor-pointer focus:outline-none p-3`}
+                        className="hidden"
                       />
                       {previewSecondaryImages.length > 0 && (
-                        <div className="mt-2 grid grid-cols-4 gap-2">
+                        <div className="mt-2 grid grid-cols-4 gap-2 w-full">
                           {previewSecondaryImages.map((image, index) => (
                             <div key={index} className="relative group">
                               <img src={image} alt={`Aperçu ${index + 1}`} className="h-20 w-20 object-cover rounded shadow" />
@@ -904,6 +1038,75 @@ const OeuvresList = ({ darkMode }) => {
                           ))}
                         </div>
                       )}
+                    </div>
+                    <div className={`rounded-lg p-4 mb-6 ${darkMode ? 'bg-[#232326] border border-gray-700' : 'bg-gray-50 border border-gray-200'}`}> 
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="artiste_id" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Artiste *</label>
+                          <select
+                            id="artiste_id"
+                            name="artiste_id"
+                            value={formData.artiste_id}
+                            onChange={handleInputChange}
+                            className={`mt-1 block w-full rounded-lg shadow-sm sm:text-sm p-3 border ${darkMode ? 'bg-[#0C0C0C] border-gray-700 text-white focus:border-[#972924] focus:ring-[#972924]' : 'border-gray-300 bg-white text-black focus:border-[#972924] focus:ring-[#972924]'}`}
+                            required
+                          >
+                            <option value="">Sélectionner un artiste</option>
+                            {artistes.map(artiste => (
+                              <option key={artiste.id} value={artiste.id}>{artiste.nom}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label htmlFor="exposition_id" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Exposition</label>
+                          <select
+                            id="exposition_id"
+                            name="exposition_id"
+                            value={formData.exposition_id}
+                            onChange={handleInputChange}
+                            className={`mt-1 block w-full rounded-lg shadow-sm sm:text-sm p-3 border ${darkMode ? 'bg-[#0C0C0C] border-gray-700 text-white focus:border-[#972924] focus:ring-[#972924]' : 'border-gray-300 bg-white text-black focus:border-[#972924] focus:ring-[#972924]'}`}
+                          >
+                            <option value="">Aucune</option>
+                            {expositions.map(expo => (
+                              <option key={expo.id} value={expo.id}>{expo.titre}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Événements associés</label>
+                        <div className={`max-h-32 overflow-y-auto p-2 border rounded-lg ${darkMode ? 'border-gray-600 bg-[#0C0C0C]' : 'border-gray-300 bg-white'}`}> 
+                          {evenements.length > 0 ? (
+                            evenements.map(evenement => (
+                              <div key={evenement.id} className="flex items-center">
+                                <input
+                                  id={`evenement-${evenement.id}`}
+                                  name="evenements"
+                                  type="checkbox"
+                                  value={evenement.id}
+                                  checked={formData.evenements && formData.evenements.includes(String(evenement.id))}
+                                  onChange={e => {
+                                    const checked = e.target.checked;
+                                    setFormData(prev => {
+                                      const prevEvs = prev.evenements || [];
+                                      return {
+                                        ...prev,
+                                        evenements: checked
+                                          ? [...prevEvs, String(evenement.id)]
+                                          : prevEvs.filter(id => id !== String(evenement.id))
+                                      };
+                                    });
+                                  }}
+                                  className={`h-4 w-4 rounded ${darkMode ? 'bg-[#18181b] border-gray-600' : 'bg-white border-gray-300'}`}
+                                />
+                                <label htmlFor={`evenement-${evenement.id}`} className={`ml-2 text-sm ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>{evenement.titre}</label>
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-gray-400 text-sm">Aucun événement</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label htmlFor="published" className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Statut</label>
@@ -924,16 +1127,26 @@ const OeuvresList = ({ darkMode }) => {
                       type="button"
                       onClick={() => setShowFormModal(false)}
                       disabled={isSubmitting}
-                      className={`px-4 py-2 text-sm font-medium rounded-md shadow-sm ${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'}`}
+                      className={`px-4 py-2 text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600 focus:ring-gray-500 focus:ring-offset-[#0C0C0C]' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 focus:ring-[#972924]'}`}
                     >
                       Annuler
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className={`px-4 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-[#972924] hover:bg-[#b33c36] flex items-center`}
+                      className={`px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px] bg-[#972924] hover:bg-[#b33c36] focus:ring-[#972924] ${darkMode ? 'focus:ring-offset-[#0C0C0C]' : ''}`}
                     >
-                      {isSubmitting ? 'Sauvegarde...' : (modalMode === 'add' ? 'Ajouter' : 'Mettre à jour')}
+                      {isSubmitting ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>{modalMode === 'add' ? 'Ajout...' : 'Mise à jour...'}</span>
+                        </>
+                      ) : (
+                        modalMode === 'add' ? 'Ajouter' : 'Mettre à jour'
+                      )}
                     </button>
                   </div>
                 </form>
