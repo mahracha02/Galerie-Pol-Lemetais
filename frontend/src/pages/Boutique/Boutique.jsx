@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import circle from '../../assets/photos/icons/circle.png';
+import { FaStore } from 'react-icons/fa';
 
 const Boutique = () => {
   return (
@@ -12,6 +13,14 @@ const Boutique = () => {
         className="flex flex-col items-center justify-center bg-white rounded-xl shadow-lg px-8 py-12 mt-24"
       >
         <img src={circle} alt="circle icon" className="w-10 h-10 mb-4" />
+        <motion.div
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+          className="mb-4"
+        >
+          <FaStore className="w-20 h-20 text-[#972924]" />
+        </motion.div>
+        
         <h1 className="text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-bold uppercase text-[#0C0C0C] mb-4 text-center" style={{ fontFamily: 'Kenyan Coffee, sans-serif', letterSpacing: 1 }}>
           Boutique
         </h1>

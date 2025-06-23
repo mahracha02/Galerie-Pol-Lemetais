@@ -22,6 +22,9 @@ import EvenementsPage from './components/Admin/EvenementsList.jsx';
 import ExpositionsPage from './components/Admin/ExpositionsList.jsx';
 import ArtistesPage from './components/Admin/ArtistesList.jsx';
 import OeuvresPage from './components/Admin/OeuvresList.jsx';
+import MediasPage from './components/Admin/MediasList.jsx';
+import CataloguesPage from './components/Admin/CataloguesList.jsx';
+import BoutiquePage from './components/Admin/Boutique/BoutiqueList.jsx';
 import UsersPage from './components/Admin/UsersList.jsx';
 import ContactsPage from './components/Admin/ContactsList.jsx';
 import NotFound from './pages/NotFound';
@@ -73,6 +76,9 @@ const App = () => {
                   <Route path="expositions" element={<ProtectedRoute><ExpositionsPage darkMode={darkMode} /></ProtectedRoute>} />
                   <Route path="artistes" element={<ProtectedRoute><ArtistesPage darkMode={darkMode} /></ProtectedRoute>} />
                   <Route path="oeuvres" element={<ProtectedRoute><OeuvresPage darkMode={darkMode} /></ProtectedRoute>} />
+                  <Route path="medias" element={<ProtectedRoute><MediasPage darkMode={darkMode} /></ProtectedRoute>} />
+                  <Route path="catalogues" element={<ProtectedRoute><CataloguesPage darkMode={darkMode} /></ProtectedRoute>} />
+                  <Route path="boutique" element={<ProtectedRoute><BoutiquePage darkMode={darkMode} /></ProtectedRoute>} />
                   <Route path="utilisateurs" element={<ProtectedRoute><UsersPage darkMode={darkMode} /></ProtectedRoute>} />
                   <Route path="contacts" element={<ProtectedRoute><ContactsPage darkMode={darkMode} /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />

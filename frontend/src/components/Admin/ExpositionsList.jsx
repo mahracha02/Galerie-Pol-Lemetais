@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaImage, FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaCalendarAlt, FaMapMarkerAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
+import DeleteModal from '../layout/DeleteModal';
 
 const ExpositionsList = ({ darkMode }) => {
   const [expositions, setExpositions] = useState([]);
@@ -26,6 +27,8 @@ const ExpositionsList = ({ darkMode }) => {
   const [artistes, setArtistes] = useState([]);
   const [catalogues, setCatalogues] = useState([]);
   const [loadingArtistes, setLoadingArtistes] = useState(true);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -133,37 +136,51 @@ const ExpositionsList = ({ darkMode }) => {
   }, []);
 
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette exposition ?')) {
-      try {
-        const response = await fetch(`/expositions/api/${id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('Erreur lors de la suppression');
-        setExpositions(expositions.filter(item => item.id !== id));
-        setSelectedExpos(selectedExpos.filter(expoId => expoId !== id));
-      } catch (error) {
-        setError('Impossible de supprimer l\'exposition. Veuillez réessayer.');
-        console.error(error);
-      }
-    }
+  const handleDelete = (id) => {
+    setDeleteTarget(id);
+    setDeleteModalOpen(true);
   };
 
-  const handleBulkDelete = async () => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${selectedExpos.length} expositions ?`)) {
+  const handleBulkDelete = () => {
+    setDeleteTarget([...selectedExpos]);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (Array.isArray(deleteTarget)) {
       setIsSubmitting(true);
       try {
-        await Promise.all(selectedExpos.map(id => 
+        await Promise.all(deleteTarget.map(id =>
           fetch(`/expositions/api/${id}`, { method: 'DELETE' })
         ));
-        setExpositions(expositions.filter(expo => !selectedExpos.includes(expo.id)));
+        setExpositions(expositions.filter(item => !deleteTarget.includes(item.id)));
         setSelectedExpos([]);
-        setSuccessMessage(`${selectedExpos.length} expositions supprimées avec succès!`);
+        setSuccessMessage(`${deleteTarget.length} expositions supprimées avec succès!`);
         setTimeout(() => setSuccessMessage(''), 3000);
       } catch (error) {
-        console.error('Bulk delete error:', error);
         setError('Erreur lors de la suppression des expositions');
         setTimeout(() => setError(''), 5000);
       } finally {
         setIsSubmitting(false);
+        setDeleteModalOpen(false);
+        setDeleteTarget(null);
+      }
+    } else if (deleteTarget) {
+      setIsSubmitting(true);
+      try {
+        const response = await fetch(`/expositions/api/${deleteTarget}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Erreur lors de la suppression');
+        setExpositions(expositions.filter(item => item.id !== deleteTarget));
+        setSelectedExpos(selectedExpos.filter(expoId => expoId !== deleteTarget));
+        setSuccessMessage('Exposition supprimée avec succès!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } catch (error) {
+        setError('Impossible de supprimer l\'exposition. Veuillez réessayer.');
+        setTimeout(() => setError(''), 5000);
+      } finally {
+        setIsSubmitting(false);
+        setDeleteModalOpen(false);
+        setDeleteTarget(null);
       }
     }
   };
@@ -813,6 +830,14 @@ const handleTogglePublish = async (expo) => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <DeleteModal
+          open={deleteModalOpen}
+          onClose={() => { setDeleteModalOpen(false); setDeleteTarget(null); }}
+          onConfirm={confirmDelete}
+          count={Array.isArray(deleteTarget) ? deleteTarget.length : 1}
+          darkMode={darkMode}
+        />
       </div>
     </div>
   );
