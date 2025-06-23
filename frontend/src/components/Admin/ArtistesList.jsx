@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaUser, FaImage, FaEye, FaEyeSlash } from 'react-icons/fa';
+import DeleteModal from '../layout/DeleteModal';
 
 const ArtistesList = ({ darkMode }) => {
   const [artistes, setArtistes] = useState([]);
@@ -18,6 +19,8 @@ const ArtistesList = ({ darkMode }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [previewImage, setPreviewImage] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   
 
   // Form data
@@ -75,35 +78,47 @@ const ArtistesList = ({ darkMode }) => {
     fetchArtistes();
   }, []);
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet artiste ?')) {
+  const handleDelete = (id) => {
+    setDeleteTarget(id);
+    setDeleteModalOpen(true);
+  };
+
+  const handleBulkDelete = () => {
+    setDeleteTarget([...selectedArtistes]);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (Array.isArray(deleteTarget)) {
       try {
-        const response = await fetch(`/artistes/api/${id}`, { method: 'DELETE' });
+        await Promise.all(deleteTarget.map(id =>
+          fetch(`/artistes/api/${id}`, { method: 'DELETE' })
+        ));
+        setArtistes(artistes.filter(artiste => !deleteTarget.includes(artiste.id)));
+        setSelectedArtistes([]);
+        setSuccessMessage(`${deleteTarget.length} artistes supprimés avec succès!`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } catch (error) {
+        setError('Impossible de supprimer les artistes. Veuillez réessayer.');
+        setTimeout(() => setError(''), 5000);
+      } finally {
+        setDeleteModalOpen(false);
+        setDeleteTarget(null);
+      }
+    } else if (deleteTarget) {
+      try {
+        const response = await fetch(`/artistes/api/${deleteTarget}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Erreur lors de la suppression');
-        setArtistes(artistes.filter(artiste => artiste.id !== id));
-        setSelectedArtistes(selectedArtistes.filter(artisteId => artisteId !== id));
+        setArtistes(artistes.filter(artiste => artiste.id !== deleteTarget));
+        setSelectedArtistes(selectedArtistes.filter(artisteId => artisteId !== deleteTarget));
         setSuccessMessage('Artiste supprimé avec succès!');
         setTimeout(() => setSuccessMessage(''), 3000);
       } catch (error) {
         setError('Impossible de supprimer l\'artiste. Veuillez réessayer.');
-        console.error(error);
-      }
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${selectedArtistes.length} artistes ?`)) {
-      try {
-        await Promise.all(selectedArtistes.map(id => 
-          fetch(`/artistes/api/${id}`, { method: 'DELETE' })
-        ));
-        setArtistes(artistes.filter(artiste => !selectedArtistes.includes(artiste.id)));
-        setSelectedArtistes([]);
-        setSuccessMessage(`${selectedArtistes.length} artistes supprimés avec succès!`);
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } catch (error) {
-        setError('Impossible de supprimer les artistes. Veuillez réessayer.');
-        console.error(error);
+        setTimeout(() => setError(''), 5000);
+      } finally {
+        setDeleteModalOpen(false);
+        setDeleteTarget(null);
       }
     }
   };
@@ -889,6 +904,13 @@ const ArtistesList = ({ darkMode }) => {
           </AnimatePresence>
         </div>
       </div>
+      <DeleteModal
+        open={deleteModalOpen}
+        onClose={() => { setDeleteModalOpen(false); setDeleteTarget(null); }}
+        onConfirm={confirmDelete}
+        count={Array.isArray(deleteTarget) ? deleteTarget.length : 1}
+        darkMode={darkMode}
+      />
     </div>
   );
 };

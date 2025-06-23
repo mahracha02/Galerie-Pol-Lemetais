@@ -127,23 +127,23 @@ final class ExpositionController extends AbstractController
                 'date_debut' => $formatter->format($expo->getDateDebut()),
                 'date_fin' => $formatter->format($expo->getDateFin()),
                 'visite_virtuelle_url' => $expo->getVisiteVirtuelleUrl(),
-                'image' => $this->getPhotoUrl($expo->getImage()),
+                'image' => $this->getPhotoUrl($expo->getImage(), 'expositions'),
                 'catalogue' => $expo->getCatalogue() ? [
                     'id' => $expo->getCatalogue()->getId(),
                     'titre' => $expo->getCatalogue()->getTitre(),
-                    'image' => $this->getPhotoUrl($expo->getCatalogue()->getImage()),
+                    'image' => $this->getPhotoUrl($expo->getCatalogue()->getImage(), 'catalogues'),
                     'link' => $expo->getCatalogue()->getLink(),
                 ] : null,
                 'artiste_principal' => $expo->getArtistePrincipal() ? [
                     'id' => $expo->getArtistePrincipal()->getId(),
                     'nom' => $expo->getArtistePrincipal()->getNom(),
-                    'photo' => $this->getPhotoUrl($expo->getArtistePrincipal()->getPhoto()),
+                    'photo' => $this->getPhotoUrl($expo->getArtistePrincipal()->getPhoto(), 'artistes'),
                 ] : null,
                 'artistes' => array_map(function ($artiste) {
                     return [
                         'id' => $artiste->getId(),
                         'nom' => $artiste->getNom(),
-                        'photo' => $this->getPhotoUrl($artiste->getPhoto()),
+                        'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                     ];
                 }, $expo->getArtists()->toArray()),
                 'published' => $expo->isPublished(),
@@ -172,24 +172,24 @@ final class ExpositionController extends AbstractController
                 'annee' => $expo->getAnnee(),
                 'date_debut' => $expo->getDateDebut()->format('Y-m-d'),
                 'date_fin' => $expo->getDateFin()->format('Y-m-d'),
-                'image' => $this->getPhotoUrl($expo->getImage()),
+                'image' => $this->getPhotoUrl($expo->getImage(), 'expositions'),
                 'visite_virtuelle_url' => $expo->getVisiteVirtuelleUrl(),
                 'catalogue' => $expo->getCatalogue() ? [
                     'id' => $expo->getCatalogue()->getId(),
                     'titre' => $expo->getCatalogue()->getTitre(),
-                    'image' => $this->getPhotoUrl($expo->getCatalogue()->getImage()),
+                    'image' => $this->getPhotoUrl($expo->getCatalogue()->getImage(), 'catalogues'),
                     'link' => $expo->getCatalogue()->getLink(),
                 ] : null,
                 'artiste_principal' => $expo->getArtistePrincipal() ? [
                     'id' => $expo->getArtistePrincipal()->getId(),
                     'nom' => $expo->getArtistePrincipal()->getNom(),
-                    'photo' => $this->getPhotoUrl($expo->getArtistePrincipal()->getPhoto()),
+                    'photo' => $this->getPhotoUrl($expo->getArtistePrincipal()->getPhoto(), 'artistes'),
                 ] : null,
                 'artistes' => array_map(function ($artiste) {
                     return [
                         'id' => $artiste->getId(),
                         'nom' => $artiste->getNom(),
-                        'photo' => $this->getPhotoUrl($artiste->getPhoto()),
+                        'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                     ];
                 }, $expo->getArtists()->toArray()),
             ];
@@ -215,13 +215,13 @@ final class ExpositionController extends AbstractController
             'annee' => $exposition->getAnnee(),
             'date_debut' => $formatter->format($exposition->getDateDebut()),
             'date_fin' => $formatter->format($exposition->getDateFin()),
-            'image' => $this->getPhotoUrl($exposition->getImage()),
+            'image' => $this->getPhotoUrl($exposition->getImage(), 'expositions'),
             'visite_virtuelle_url' => $exposition->getVisiteVirtuelleUrl(),
             'medias' => array_map(function ($media) {
                 return [
                     'id' => $media->getId(),
                     'titre' => $media->getTitre(),
-                    'image' => $this->getPhotoUrl($media->getImage()),
+                    'image' => $this->getPhotoUrl($media->getImage(), 'medias'),
                     'link_url' => $media->getLinkUrl(),
                 ];
             }, $exposition->getMedias()->toArray()),
@@ -229,7 +229,7 @@ final class ExpositionController extends AbstractController
                 return [
                     'id' => $oeuvre->getId(),
                     'titre' => $oeuvre->getTitre(),
-                    'image_principale' => $this->getParameter('app.base_url') . "photos/" . $oeuvre->getImagePrincipale(),
+                    'image_principale' => $this->getPhotoUrl($oeuvre->getImagePrincipale(), 'oeuvres'),
                     'dimensions' => $oeuvre->getDimensions(),
                     'annee' => $oeuvre->getAnnee(),
                     'technique' => $oeuvre->getTechnique(),
@@ -237,7 +237,7 @@ final class ExpositionController extends AbstractController
                     'artiste' => [
                         'id' => $oeuvre->getArtiste()->getId(),
                         'nom' => $oeuvre->getArtiste()->getNom(),
-                        'photo' => $this->getPhotoUrl($oeuvre->getArtiste()->getPhoto()),
+                        'photo' => $this->getPhotoUrl($oeuvre->getArtiste()->getPhoto(), 'artistes'),
                     ],
                 ];
             }, $exposition->getOeuvres()->toArray()),
@@ -245,27 +245,27 @@ final class ExpositionController extends AbstractController
                 return [
                     'id' => $media->getId(),
                     'titre' => $media->getTitre(),
-                    'image' => $this->getPhotoUrl($media->getImage()),
+                    'image' => $this->getPhotoUrl($media->getImage(), 'medias'),
                     'link_url' => $media->getLinkUrl(),
                 ];
             }, $exposition->getMedias()->toArray()),
             'catalogue' => $exposition->getCatalogue() ? [
                 'id' => $exposition->getCatalogue()->getId(),
                 'titre' => $exposition->getCatalogue()->getTitre(),
-                'image' => $this->getPhotoUrl($exposition->getCatalogue()->getImage()),
+                'image' => $this->getPhotoUrl($exposition->getCatalogue()->getImage(), 'catalogues'),
                 'link' => $exposition->getCatalogue()->getLink(),
             ] : null,
             'artiste_principal' => $exposition->getArtistePrincipal() ? [
                 'id' => $exposition->getArtistePrincipal()->getId(),
                 'nom' => $exposition->getArtistePrincipal()->getNom(),
-                'photo' => $this->getPhotoUrl($exposition->getArtistePrincipal()->getPhoto()),
+                'photo' => $this->getPhotoUrl($exposition->getArtistePrincipal()->getPhoto(), 'artistes'),
                 'bio' => $exposition->getArtistePrincipal()->getBio(),
             ] : null,
             'artistes' => array_map(function ($artiste) {
                 return [
                     'id' => $artiste->getId(),
                     'nom' => $artiste->getNom(),
-                    'photo' => $this->getPhotoUrl($artiste->getPhoto()),
+                    'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                 ];
             }, $exposition->getArtists()->toArray()),
             'published' => $exposition->isPublished(),
@@ -581,7 +581,7 @@ final class ExpositionController extends AbstractController
         }
     }
 
-    private function getPhotoUrl($photoPath): string
+    private function getPhotoUrl($photoPath, $folder): string
     {
         if (!$photoPath) {
             return '';
@@ -593,6 +593,6 @@ final class ExpositionController extends AbstractController
         }
         
         // Otherwise, construct the full URL
-        return $this->getParameter('app.base_url') . "uploads/expositions/" . $photoPath;
+        return $this->getParameter('app.base_url') . "uploads/" . $folder . "/" . $photoPath;
     }
 }

@@ -81,6 +81,17 @@ final class CatalogueController extends AbstractController{
         }
     }
 
+    private function getPhotoUrl($photoPath): string
+    {
+        if (!$photoPath) {
+            return '';
+        }
+        if (strpos($photoPath, 'http://') === 0 || strpos($photoPath, 'https://') === 0) {
+            return $photoPath;
+        }
+        return $this->getParameter('app.base_url') . 'uploads/catalogues/' . ltrim($photoPath, '/');
+    }
+
     #[Route('/api', name: 'app_artiste_catalogues', methods: ['GET'])]
     public function getCataloguesPublished(Request $request): Response
     {
@@ -90,7 +101,7 @@ final class CatalogueController extends AbstractController{
             return [
                 'id' => $catalogue->getId(),
                 'titre' => $catalogue->getTitre(),
-                'image' => $catalogue->getImage(),
+                'image' => $this->getPhotoUrl($catalogue->getImage()),
                 'link' => $catalogue->getLink(),
                 'published' => $catalogue->isPublished(),
             ];
@@ -98,19 +109,126 @@ final class CatalogueController extends AbstractController{
         return $this->json($catalogues);
     }
 
-    #[Route('/admin/api', name: 'app_artiste_catalogues', methods: ['GET'])]
-    public function getCatalogues(Request $request): Response
+    #[Route('/admin/api', name: 'catalogue_admin_list', methods: ['GET'])]
+    public function getAllCatalogues(): Response
     {
         $catalogues = $this->catalogueRepository->findAll();
-
-        $catalogues = array_map(function (Catalogue $catalogue) {
+        $data = array_map(function (Catalogue $catalogue) {
             return [
                 'id' => $catalogue->getId(),
                 'titre' => $catalogue->getTitre(),
-                'image' => $catalogue->getImage(),
+                'image' => $this->getPhotoUrl($catalogue->getImage()),
                 'link' => $catalogue->getLink(),
+                'published' => $catalogue->isPublished(),
             ];
         }, $catalogues);
-        return $this->json($catalogues);
+        return $this->json($data);
+    }
+
+    #[Route('/admin/api/{id}', name: 'catalogue_admin_show', methods: ['GET'])]
+    public function getCatalogue(int $id): Response
+    {
+        $catalogue = $this->catalogueRepository->find($id);
+        if (!$catalogue) {
+            return $this->json(['error' => 'Catalogue not found'], Response::HTTP_NOT_FOUND);
+        }
+        return $this->json([
+            'id' => $catalogue->getId(),
+            'titre' => $catalogue->getTitre(),
+            'image' => $this->getPhotoUrl($catalogue->getImage()),
+            'link' => $catalogue->getLink(),
+            'published' => $catalogue->isPublished(),
+        ]);
+    }
+
+    #[Route('/admin/api', name: 'catalogue_admin_create', methods: ['POST'])]
+    public function createCatalogue(Request $request): Response
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!$data) {
+            return $this->json(['error' => 'Invalid JSON data'], Response::HTTP_BAD_REQUEST);
+        }
+        $catalogue = new Catalogue();
+        $catalogue->setTitre($data['titre'] ?? '');
+        $catalogue->setLink($data['link'] ?? '');
+        $catalogue->setPublished($data['published'] ?? false);
+        // Image upload
+        if (!empty($data['image'])) {
+            try {
+                $imagePath = $this->handleImageUpload($data['image']);
+                $catalogue->setImage($imagePath);
+            } catch (\Exception $e) {
+                return $this->json(['error' => 'Image upload failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+        }
+        $this->entityManager->persist($catalogue);
+        $this->entityManager->flush();
+        return $this->json(['id' => $catalogue->getId()], Response::HTTP_CREATED);
+    }
+
+    #[Route('/admin/api/{id}', name: 'catalogue_admin_update', methods: ['PUT'])]
+    public function updateCatalogue(Request $request, int $id): Response
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!$data) {
+            return $this->json(['error' => 'Invalid JSON data'], Response::HTTP_BAD_REQUEST);
+        }
+        $catalogue = $this->catalogueRepository->find($id);
+        if (!$catalogue) {
+            return $this->json(['error' => 'Catalogue not found'], Response::HTTP_NOT_FOUND);
+        }
+        if (array_key_exists('titre', $data)) $catalogue->setTitre($data['titre']);
+        if (array_key_exists('link', $data)) $catalogue->setLink($data['link']);
+        if (array_key_exists('published', $data)) $catalogue->setPublished($data['published']);
+        // Image upload
+        if (isset($data['image'])) {
+            if (!empty($data['image']) && strpos($data['image'], 'data:image') === 0) {
+                // New base64 image uploaded - delete old image first
+                $oldImage = $catalogue->getImage();
+                if ($oldImage && !empty($oldImage)) {
+                    $this->deleteOldImage($oldImage);
+                }
+                try {
+                    $imagePath = $this->handleImageUpload($data['image']);
+                    $catalogue->setImage($imagePath);
+                } catch (\Exception $e) {
+                    return $this->json(['error' => 'Image upload failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+                }
+            } elseif (empty($data['image'])) {
+                $catalogue->setImage(null);
+            }
+        }
+        $this->entityManager->persist($catalogue);
+        $this->entityManager->flush();
+        return $this->json(['id' => $catalogue->getId()], Response::HTTP_OK);
+    }
+
+    #[Route('/admin/api/{id}', name: 'catalogue_admin_delete', methods: ['DELETE'])]
+    public function deleteCatalogue(int $id): Response
+    {
+        $catalogue = $this->catalogueRepository->find($id);
+        if (!$catalogue) {
+            return $this->json(['error' => 'Catalogue not found'], Response::HTTP_NOT_FOUND);
+        }
+        // Delete image file
+        $oldImage = $catalogue->getImage();
+        if ($oldImage && !empty($oldImage)) {
+            $this->deleteOldImage($oldImage);
+        }
+        $this->entityManager->remove($catalogue);
+        $this->entityManager->flush();
+        return $this->json(['success' => true], Response::HTTP_NO_CONTENT);
+    }
+
+    private function deleteOldImage($oldPhotoPath): void
+    {
+        if (!$oldPhotoPath || empty($oldPhotoPath)) {
+            return;
+        }
+        $filename = basename($oldPhotoPath);
+        $fullPath = $this->uploadDir . $filename;
+        if (file_exists($fullPath)) {
+            @unlink($fullPath);
+        }
     }
 }

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaImage, FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaCalendarAlt, FaMapMarkerAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
+import DeleteModal from '../layout/DeleteModal';
 
 const EvenementsList = ({ darkMode }) => {
   const [evenements, setEvenements] = useState([]);
@@ -21,6 +22,8 @@ const EvenementsList = ({ darkMode }) => {
   const [previewImage, setPreviewImage] = useState(null);
   const [artistes, setArtistes] = useState([]);
   const [loadingArtistes, setLoadingArtistes] = useState(true);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -112,37 +115,51 @@ const EvenementsList = ({ darkMode }) => {
     fetchArtistes();
   }, []);
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')) {
-      try {
-        const response = await fetch(`/evenements/admin/api/${id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('Erreur lors de la suppression');
-        setEvenements(evenements.filter(item => item.id !== id));
-        setSelectedEvents(selectedEvents.filter(eventId => eventId !== id));
-      } catch (error) {
-        setError('Impossible de supprimer l\'événement. Veuillez réessayer.');
-        console.error(error);
-      }
-    }
+  const handleDelete = (id) => {
+    setDeleteTarget(id);
+    setDeleteModalOpen(true);
   };
 
-  const handleBulkDelete = async () => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${selectedEvents.length} événements ?`)) {
+  const handleBulkDelete = () => {
+    setDeleteTarget([...selectedEvents]);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (Array.isArray(deleteTarget)) {
       setIsSubmitting(true);
       try {
-        await Promise.all(selectedEvents.map(id =>
+        await Promise.all(deleteTarget.map(id =>
           fetch(`/evenements/admin/api/${id}`, { method: 'DELETE' })
         ));
-        setEvenements(evenements.filter(event => !selectedEvents.includes(event.id)));
+        setEvenements(evenements.filter(event => !deleteTarget.includes(event.id)));
         setSelectedEvents([]);
-        setSuccessMessage(`${selectedEvents.length} événements supprimés avec succès!`);
+        setSuccessMessage(`${deleteTarget.length} événements supprimés avec succès!`);
         setTimeout(() => setSuccessMessage(''), 3000);
       } catch (error) {
-        console.error('Bulk delete error:', error);
         setError('Erreur lors de la suppression des événements');
         setTimeout(() => setError(''), 5000);
       } finally {
         setIsSubmitting(false);
+        setDeleteModalOpen(false);
+        setDeleteTarget(null);
+      }
+    } else if (deleteTarget) {
+      setIsSubmitting(true);
+      try {
+        const response = await fetch(`/evenements/admin/api/${deleteTarget}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Erreur lors de la suppression');
+        setEvenements(evenements.filter(event => event.id !== deleteTarget));
+        setSelectedEvents(selectedEvents.filter(eventId => eventId !== deleteTarget));
+        setSuccessMessage('Événement supprimé avec succès!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } catch (error) {
+        setError('Impossible de supprimer l\'événement. Veuillez réessayer.');
+        setTimeout(() => setError(''), 5000);
+      } finally {
+        setIsSubmitting(false);
+        setDeleteModalOpen(false);
+        setDeleteTarget(null);
       }
     }
   };
@@ -621,6 +638,14 @@ const EvenementsList = ({ darkMode }) => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <DeleteModal
+          open={deleteModalOpen}
+          onClose={() => { setDeleteModalOpen(false); setDeleteTarget(null); }}
+          onConfirm={confirmDelete}
+          count={Array.isArray(deleteTarget) ? deleteTarget.length : 1}
+          darkMode={darkMode}
+        />
       </div>
     </div>
   );

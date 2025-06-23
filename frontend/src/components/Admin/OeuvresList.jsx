@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaImage, FaEye, FaEyeSlash, FaPalette } from 'react-icons/fa';
+import DeleteModal from '../layout/DeleteModal';
 
 const OeuvresList = ({ darkMode }) => {
   const [oeuvres, setOeuvres] = useState([]);
@@ -22,7 +23,8 @@ const OeuvresList = ({ darkMode }) => {
   const [artistes, setArtistes] = useState([]);
   const [expositions, setExpositions] = useState([]);
   const [evenements, setEvenements] = useState([]);
-
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -107,36 +109,51 @@ const OeuvresList = ({ darkMode }) => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette œuvre ?')) {
-      try {
-        const response = await fetch(`/oeuvres/api/${id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('Erreur lors de la suppression');
-        setOeuvres(oeuvres.filter(oeuvre => oeuvre.id !== id));
-        setSelectedOeuvres(selectedOeuvres.filter(oeuvreId => oeuvreId !== id));
-      } catch (error) {
-        setError('Impossible de supprimer l\'œuvre. Veuillez réessayer.');
-        console.error(error);
-      }
-    }
+  const handleDelete = (id) => {
+    setDeleteTarget(id);
+    setDeleteModalOpen(true);
   };
 
-  const handleBulkDelete = async () => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${selectedOeuvres.length} œuvres ?`)) {
+  const handleBulkDelete = () => {
+    setDeleteTarget([...selectedOeuvres]);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (Array.isArray(deleteTarget)) {
       setIsSubmitting(true);
       try {
-        await Promise.all(selectedOeuvres.map(id =>
+        await Promise.all(deleteTarget.map(id =>
           fetch(`/oeuvres/api/${id}`, { method: 'DELETE' })
         ));
-        setOeuvres(oeuvres.filter(oeuvre => !selectedOeuvres.includes(oeuvre.id)));
+        setOeuvres(oeuvres.filter(oeuvre => !deleteTarget.includes(oeuvre.id)));
         setSelectedOeuvres([]);
-        setSuccessMessage(`${selectedOeuvres.length} œuvres supprimées avec succès!`);
+        setSuccessMessage(`${deleteTarget.length} œuvres supprimées avec succès!`);
         setTimeout(() => setSuccessMessage(''), 3000);
       } catch (error) {
         setError('Erreur lors de la suppression des œuvres');
         setTimeout(() => setError(''), 5000);
       } finally {
         setIsSubmitting(false);
+        setDeleteModalOpen(false);
+        setDeleteTarget(null);
+      }
+    } else if (deleteTarget) {
+      setIsSubmitting(true);
+      try {
+        const response = await fetch(`/oeuvres/api/${deleteTarget}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Erreur lors de la suppression');
+        setOeuvres(oeuvres.filter(oeuvre => oeuvre.id !== deleteTarget));
+        setSelectedOeuvres(selectedOeuvres.filter(oeuvreId => oeuvreId !== deleteTarget));
+        setSuccessMessage('Œuvre supprimée avec succès!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } catch (error) {
+        setError('Impossible de supprimer l\'œuvre. Veuillez réessayer.');
+        setTimeout(() => setError(''), 5000);
+      } finally {
+        setIsSubmitting(false);
+        setDeleteModalOpen(false);
+        setDeleteTarget(null);
       }
     }
   };
@@ -1154,6 +1171,14 @@ const OeuvresList = ({ darkMode }) => {
             </motion.div>
           </AnimatePresence>
         )}
+
+        <DeleteModal
+          open={deleteModalOpen}
+          onClose={() => { setDeleteModalOpen(false); setDeleteTarget(null); }}
+          onConfirm={confirmDelete}
+          count={Array.isArray(deleteTarget) ? deleteTarget.length : 1}
+          darkMode={darkMode}
+        />
       </div>
     </div>
   );
