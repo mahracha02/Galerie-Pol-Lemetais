@@ -104,7 +104,13 @@ const DetailsArtiste = () => {
     );
   }
 
-  const displayedOeuvres = showAllOeuvres ? artiste.oeuvres : artiste.oeuvres.slice(0, 8);
+  const oeuvresArray = Array.isArray(artiste.oeuvres)
+    ? artiste.oeuvres
+    : artiste.oeuvres
+      ? Object.values(artiste.oeuvres)
+      : [];
+  const displayedOeuvres = showAllOeuvres ? oeuvresArray : oeuvresArray.slice(0, 8);
+  console.log('Displayed Oeuvres:', displayedOeuvres);
 
   // Split name for color styling
   const [prenom, ...nomRest] = artiste.nom ? artiste.nom.split(' ') : [''];
@@ -316,13 +322,14 @@ const DetailsArtiste = () => {
                         </h4>
                         <div className="flex flex-wrap gap-1 md:gap-2">
                           {principalExpo.artistes.map((artist) => (
-                            <div
+                            <Link
+                              to={`/artistes/${artist.id}`}
                               key={artist.id}
                               className="inline-block px-2 py-1 md:px-3 md:py-1.5 bg-gray-100 hover:bg-[#972924] hover:text-white text-[#972924] rounded-full text-[0.65rem] md:text-[0.75rem] lg:text-[0.8rem] transition-all duration-300 border border-gray-200 hover:border-[#972924] shadow-sm hover:shadow-md"
                               style={{ fontFamily: 'Poppins Regular, sans-serif' }}
                             >
                               {artist.nom}
-                            </div>
+                            </Link>
                           ))}
                         </div>
                       </div>
@@ -413,13 +420,14 @@ const DetailsArtiste = () => {
                           </h4>
                           <div className="flex flex-wrap gap-1 md:gap-2">
                             {expo.artistes.map((artist) => (
-                              <div
+                              <Link
+                                to={`/artistes/${artist.id}`}
                                 key={artist.id}
                                 className="inline-block px-2 py-1 md:px-3 md:py-1.5 bg-gray-100 hover:bg-[#972924] hover:text-white text-[#972924] rounded-full text-[0.65rem] md:text-[0.75rem] lg:text-[0.8rem] transition-all duration-300 border border-gray-200 hover:border-[#972924] shadow-sm hover:shadow-md"
                                 style={{ fontFamily: 'Poppins Regular, sans-serif' }}
                               >
                                 {artist.nom}
-                              </div>
+                              </Link>
                             ))}
                           </div>
                         </div>
