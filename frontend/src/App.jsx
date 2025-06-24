@@ -32,6 +32,7 @@ import OeuvreDetails from './pages/OeuvreDetails.jsx';
 import ScrollToTop from './components/layout/ScrollToTop';
 import AdminSidebar from './components/Admin/AdminSidebar.jsx';
 import { useState, useEffect } from 'react';
+import { AuthProvider } from './contexts/useAuth.jsx';
 
 // Composant de protection des routes admin
 const ProtectedRoute = ({ children }) => {
@@ -60,7 +61,8 @@ const App = () => {
   }, []);
 
   return (
-    <> 
+    <>
+    <AuthProvider>
       <Router>
         <ScrollToTop />
         <Routes>
@@ -116,6 +118,7 @@ const App = () => {
           } />
         </Routes>
       </Router>
+    </AuthProvider>
     </>
   );
 };
