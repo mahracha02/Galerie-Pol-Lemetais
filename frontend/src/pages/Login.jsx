@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaUser, FaLock, FaEye, FaEyeSlash, FaPaintBrush } from 'react-icons/fa';
 import { useAuth } from '../contexts/useAuth';
 
 const Login = () => {
@@ -26,7 +26,6 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
     try {
       const response = await fetch('/admin/api/login', {
         method: 'POST',
@@ -35,20 +34,16 @@ const Login = () => {
         },
         body: JSON.stringify(formData),
       });
-
       if (!response.ok) {
         throw new Error('Identifiants invalides');
       }
-
       const data = await response.json();
-      console.log('Login API response:', data);
       if (!data.token) {
         throw new Error('Token manquant dans la réponse');
       }
       if (!data.user) {
         throw new Error('Utilisateur manquant dans la réponse');
       }
-
       login(data.token, data.user);
       navigate('/admin');
     } catch (error) {
@@ -59,113 +54,106 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #972924 0%, #0C0C0C 100%)' }}>
+      {/* Animated background art shapes */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 0.15, scale: 1 }}
+        transition={{ duration: 1.5, ease: 'easeOut' }}
+        className="absolute top-0 left-0 w-full h-full z-0 pointer-events-none"
       >
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-center">
-            <h1 className="text-3xl font-bold text-white mb-2">Administration</h1>
-            <p className="text-blue-100">Connectez-vous à votre espace</p>
+        <svg width="100%" height="100%" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+          <motion.ellipse
+            cx="300" cy="200" rx="220" ry="120"
+            fill="#fff" fillOpacity="0.08"
+            animate={{ x: [0, 40, 0], y: [0, 20, 0] }}
+            transition={{ repeat: Infinity, duration: 8, ease: 'easeInOut' }}
+          />
+          <motion.ellipse
+            cx="1200" cy="700" rx="180" ry="90"
+            fill="#FFD700" fillOpacity="0.07"
+            animate={{ x: [0, -30, 0], y: [0, -15, 0] }}
+            transition={{ repeat: Infinity, duration: 10, ease: 'easeInOut' }}
+          />
+          <motion.ellipse
+            cx="900" cy="300" rx="140" ry="70"
+            fill="#972924" fillOpacity="0.10"
+            animate={{ x: [0, 20, 0], y: [0, 10, 0] }}
+            transition={{ repeat: Infinity, duration: 12, ease: 'easeInOut' }}
+          />
+        </svg>
+      </motion.div>
+      {/* Login Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 60 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+        className="relative z-10 flex flex-col items-center justify-center bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl px-10 py-12 mt-24 border border-[#972924]/10"
+        style={{ boxShadow: '0 8px 32px 0 rgba(151,41,36,0.15)' }}
+      >
+        <motion.div
+          animate={{ rotate: [0, 10, -10, 0] }}
+          transition={{ repeat: Infinity, duration: 6, ease: 'easeInOut' }}
+          className="mb-4"
+        >
+          <FaPaintBrush className="w-14 h-14 text-[#972924] drop-shadow-lg" />
+        </motion.div>
+        <h1
+          className="text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] font-bold uppercase text-[#0C0C0C] mb-4 text-center"
+          style={{ fontFamily: 'Kenyan Coffee, sans-serif', letterSpacing: 1 }}
+        >
+          Connexion
+        </h1>
+        <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-4 mt-2">
+          <div className="flex items-center border border-gray-200 rounded-lg px-3 py-2 bg-gray-50">
+            <FaUser className="text-[#972924] mr-2" />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="flex-1 bg-transparent outline-none text-[#0C0C0C] font-semibold text-base"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            />
           </div>
-
-          {/* Form */}
-          <div className="p-8">
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm"
-              >
-                {error}
-              </motion.div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaUser className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="votre@email.com"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mot de passe
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaLock className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    {showPassword ? (
-                      <FaEyeSlash className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <FaEye className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={isLoading}
-                  className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                    isLoading ? 'opacity-75 cursor-not-allowed' : ''
-                  }`}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Connexion en cours...
-                    </div>
-                  ) : (
-                    'Se connecter'
-                  )}
-                </motion.button>
-              </div>
-            </form>
+          <div className="flex items-center border border-gray-200 rounded-lg px-3 py-2 bg-gray-50">
+            <FaLock className="text-[#972924] mr-2" />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              placeholder="Mot de passe"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="flex-1 bg-transparent outline-none text-[#0C0C0C] font-semibold text-base"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              tabIndex={-1}
+              className="ml-2 text-[#972924] focus:outline-none"
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
           </div>
-        </div>
+          {error && (
+            <div className="text-red-600 text-center text-sm font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>{error}</div>
+          )}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-2 mt-2 rounded-lg bg-[#972924] text-white font-bold text-lg transition hover:bg-[#7a1e1c] focus:outline-none focus:ring-2 focus:ring-[#972924] focus:ring-opacity-50 shadow-md"
+            style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: 1 }}
+          >
+            {isLoading ? 'Connexion...' : 'Se connecter'}
+          </button>
+        </form>
       </motion.div>
     </div>
   );
 };
 
-export default Login; 
+export default Login;
