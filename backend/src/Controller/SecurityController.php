@@ -102,14 +102,14 @@ class SecurityController extends AbstractController
                     'prenom' => $user->getPrenom(),
                     'email' => $user->getEmail(),
                     'telephone' => $user->getTelephone(),
-                    'roles' => $roles,
+                    'role' => $roles,
                     
                 ],
                 'token' => $token
             ]);
         } catch (\Exception $e) {
             $this->logger->error('Login failed with exception: ' . $e->getMessage());
-            return new JsonResponse(['error' => 'Authentication failed'], Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse(['error' => 'Authentication failed', 'details' => $e->getMessage()], Response::HTTP_UNAUTHORIZED);
         }
     }
 

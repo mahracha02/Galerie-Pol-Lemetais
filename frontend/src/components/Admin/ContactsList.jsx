@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaEnvelope, FaPhone, FaUser } from 'react-icons/fa';
+import DeleteModal from '../layout/DeleteModal';
 
 const ContactsList = ({ darkMode }) => {
   const [contacts, setContacts] = useState([]);
@@ -14,6 +15,9 @@ const ContactsList = ({ darkMode }) => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedContact, setSelectedContact] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [bulkDelete, setBulkDelete] = useState(false);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -34,28 +38,21 @@ const ContactsList = ({ darkMode }) => {
   }, []);
 
   
-  const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce contact ?')) {
-      try {
-        const response = await fetch(`/contacts/api/${id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('Erreur lors de la suppression');
-        setContacts(contacts.filter(contact => contact.id !== id));
-        setSelectedContacts(selectedContacts.filter(contactId => contactId !== id));
-        setSuccessMessage('Contact supprimé avec succès');
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } catch (error) {
-        setError('Impossible de supprimer le contact. Veuillez réessayer.');
-        console.error(error);
-      }
-    }
+  const handleDelete = (id) => {
+    setDeleteTarget(id);
+    setBulkDelete(false);
+    setDeleteModalOpen(true);
   };
 
-  const handleBulkDelete = async () => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${selectedContacts.length} contacts ?`)) {
+  const handleBulkDelete = () => {
+    setBulkDelete(true);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (bulkDelete) {
       try {
-        await Promise.all(selectedContacts.map(id => 
-          fetch(`/contacts/api/${id}`, { method: 'DELETE' })
-        ));
+        await Promise.all(selectedContacts.map(id => fetch(`/contacts/api/${id}`, { method: 'DELETE' })));
         setContacts(contacts.filter(contact => !selectedContacts.includes(contact.id)));
         setSelectedContacts([]);
         setSuccessMessage(`${selectedContacts.length} contacts supprimés avec succès`);
@@ -64,7 +61,28 @@ const ContactsList = ({ darkMode }) => {
         setError('Impossible de supprimer les contacts. Veuillez réessayer.');
         console.error(error);
       }
+    } else if (deleteTarget) {
+      try {
+        const response = await fetch(`/contacts/api/${deleteTarget}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Erreur lors de la suppression');
+        setContacts(contacts.filter(contact => contact.id !== deleteTarget));
+        setSelectedContacts(selectedContacts.filter(contactId => contactId !== deleteTarget));
+        setSuccessMessage('Contact supprimé avec succès');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } catch (error) {
+        setError('Impossible de supprimer le contact. Veuillez réessayer.');
+        console.error(error);
+      }
     }
+    setDeleteModalOpen(false);
+    setDeleteTarget(null);
+    setBulkDelete(false);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setDeleteTarget(null);
+    setBulkDelete(false);
   };
 
   const handleSort = (field) => {
@@ -78,25 +96,25 @@ const ContactsList = ({ darkMode }) => {
 
   const filteredContacts = contacts
     .filter(contact => {
-      const searchLower = searchTerm.toLowerCase();
+      const searchLower = (searchTerm || '').toLowerCase();
       return (
-        contact.nom.toLowerCase().includes(searchLower) ||
-        contact.prenom.toLowerCase().includes(searchLower) ||
-        contact.email.toLowerCase().includes(searchLower) ||
-        contact.telephone.includes(searchTerm) ||
-        contact.message.toLowerCase().includes(searchLower)
+        (contact.nom?.toLowerCase() || '').includes(searchLower) ||
+        (contact.prenom?.toLowerCase() || '').includes(searchLower) ||
+        (contact.email?.toLowerCase() || '').includes(searchLower) ||
+        ((contact.telephone ?? '').toString().includes(searchTerm)) ||
+        (contact.message?.toLowerCase() || '').includes(searchLower)
       );
     })
     .sort((a, b) => {
       const direction = sortDirection === 'asc' ? 1 : -1;
       if (sortField === 'nom') {
-        return direction * a.nom.localeCompare(b.nom);
+        return direction * (a.nom?.localeCompare(b.nom) || 0);
       }
       if (sortField === 'prenom') {
-        return direction * a.prenom.localeCompare(b.prenom);
+        return direction * (a.prenom?.localeCompare(b.prenom) || 0);
       }
       if (sortField === 'email') {
-        return direction * a.email.localeCompare(b.email);
+        return direction * (a.email?.localeCompare(b.email) || 0);
       }
       if (sortField === 'date_envoi') {
         return direction * (new Date(a.date_envoi) - new Date(b.date_envoi));
@@ -495,6 +513,16 @@ const ContactsList = ({ darkMode }) => {
           </AnimatePresence>
         </div>
       </div>
+
+      {deleteModalOpen && (
+        <DeleteModal
+          open={deleteModalOpen}
+          onClose={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          count={bulkDelete ? selectedContacts.length : 1}
+          darkMode={darkMode}
+        />
+      )}
     </div>
   );
 };

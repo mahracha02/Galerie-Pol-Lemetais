@@ -62,12 +62,12 @@ const Footer = () => {
             <ul className="space-y-3 text-[#FFFFFF] text-md"
               style={{ fontFamily: 'Poppins Regular, sans-serif' }}
             >
-              <li><a href="#" className="hover:text-white transition-colors duration-300">Artistes</a></li>
-              <li><a href="#" className="hover:text-white transition-colors duration-300">Expositions</a></li>
-              <li><a href="#" className="hover:text-white transition-colors duration-300">Événements</a></li>
-              <li><a href="#" className="hover:text-white transition-colors duration-300">Catalogues</a></li>
-              <li><a href="#" className="hover:text-white transition-colors duration-300">Boutique</a></li>
-              <li><a href="#" className="hover:text-white transition-colors duration-300">Contact</a></li>
+              <li><Link to="/artistes" className="hover:text-white transition-colors duration-300">Artistes</Link></li>
+              <li><Link to="/expositions" className="hover:text-white transition-colors duration-300">Expositions</Link></li>
+              <li><Link to="/evenements" className="hover:text-white transition-colors duration-300">Événements</Link></li>
+              <li><Link to="/catalogues" className="hover:text-white transition-colors duration-300">Catalogues</Link></li>
+              <li><Link to="/boutique" className="hover:text-white transition-colors duration-300">Boutique</Link></li>
+              <li><Link to="/contact" className="hover:text-white transition-colors duration-300">Contact</Link></li>
             </ul>
           </div>
         </div>

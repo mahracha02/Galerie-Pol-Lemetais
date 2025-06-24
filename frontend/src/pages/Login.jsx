@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useAuth } from '../contexts/useAuth';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -39,7 +41,15 @@ const Login = () => {
       }
 
       const data = await response.json();
-      localStorage.setItem('token', data.token);
+      console.log('Login API response:', data);
+      if (!data.token) {
+        throw new Error('Token manquant dans la réponse');
+      }
+      if (!data.user) {
+        throw new Error('Utilisateur manquant dans la réponse');
+      }
+
+      login(data.token, data.user);
       navigate('/admin');
     } catch (error) {
       setError(error.message);

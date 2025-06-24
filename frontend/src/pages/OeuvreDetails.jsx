@@ -25,8 +25,19 @@ const OeuvreDetails = () => {
 
   // Gestion des images secondaires
   const baseUrl = "http://127.0.0.1:8000/uploads/";
-  const secondaryImages = oeuvre.images_secondaires
-    ? oeuvre.images_secondaires
+  let secondaryImages = [];
+  if (oeuvre.images_secondaires) {
+    if (Array.isArray(oeuvre.images_secondaires)) {
+      secondaryImages = oeuvre.images_secondaires
+        .map((img) => (typeof img === 'string' ? img.trim() : ''))
+        .filter((img) => img && img !== oeuvre.image_principale)
+        .map((img) =>
+          img.startsWith('http://') || img.startsWith('https://')
+            ? img.replace('https://', 'http://')
+            : baseUrl + img
+        );
+    } else if (typeof oeuvre.images_secondaires === 'string') {
+      secondaryImages = oeuvre.images_secondaires
         .split(/\r?\n|,/) // split par retour ligne ou virgule
         .map((img) => img.trim())
         .filter((img) => img && img !== oeuvre.image_principale)
@@ -34,8 +45,9 @@ const OeuvreDetails = () => {
           img.startsWith('http://') || img.startsWith('https://')
             ? img.replace('https://', 'http://')
             : baseUrl + img
-        )
-    : [];
+        );
+    }
+  }
 
   // Split title for color styling
   const [titre1, ...titreRest] = oeuvre.titre ? oeuvre.titre.split(' ') : [''];

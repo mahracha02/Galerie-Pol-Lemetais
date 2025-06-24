@@ -79,6 +79,10 @@ final class AdminController extends AbstractController{
         $admin->setPrenom($data['prenom']);
         $admin->setTelephone($data['telephone']);
 
+        if (isset($data['roles']) && is_array($data['roles'])) {
+            $admin->setRoles($data['roles']);
+        }
+
         $this->entityManager->persist($admin);
         $this->entityManager->flush();
 
@@ -112,6 +116,10 @@ final class AdminController extends AbstractController{
         $admin->setNom($data['nom']);
         $admin->setPrenom($data['prenom']);
         $admin->setTelephone($data['telephone']);
+
+        if (isset($data['roles']) && is_array($data['roles'])) {
+            $admin->setRoles($data['roles']);
+        }
 
         $this->entityManager->flush();
 
