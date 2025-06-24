@@ -14,9 +14,76 @@ use Symfony\Component\Routing\Attribute\Route;
 use Doctrine\ORM\EntityManagerInterface;
 use IntlDateFormatter;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Intervention\Image\ImageManager;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/evenements')]
 final class EvenementController extends AbstractController{
+
+    private string $uploadDir;
+
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private EvenementRepository $evenementRepository,
+        private SerializerInterface $serializer,
+        private SluggerInterface $slugger,
+        private ParameterBagInterface $params
+    ) {
+        $this->uploadDir = $this->params->get('kernel.project_dir') . '/public/uploads/evenements/';
+        if (!file_exists($this->uploadDir)) {
+            mkdir($this->uploadDir, 0777, true);
+        }
+    }
+    private function handleImageUpload($imageData): ?string
+    {
+        if (!$imageData) {
+            return null;
+        }
+
+        try {
+            // Check if the image data is base64
+            if (strpos($imageData, 'data:image') === 0) {
+                $parts = explode(',', $imageData);
+                if (count($parts) !== 2) {
+                    throw new \Exception('Invalid base64 image format');
+                }
+                $imageData = $parts[1];
+            }
+
+            // Decode base64 data
+            $decodedData = base64_decode($imageData);
+            if ($decodedData === false) {
+                throw new \Exception('Invalid base64 image data');
+            }
+            
+            // Create image manager instance with GD driver
+            $imageManager = ImageManager::withDriver(new \Intervention\Image\Drivers\Gd\Driver());
+            $image = $imageManager->read($decodedData);
+
+            // Crop and resize image to a 5:4 aspect ratio
+            $image->cover(800, 640);
+
+            // Generate unique filename
+            $newFilename = uniqid() . '.jpg';
+
+            // Ensure upload directory exists
+            if (!is_dir($this->uploadDir)) {
+                if (!mkdir($this->uploadDir, 0777, true)) {
+                    throw new \Exception('Failed to create upload directory');
+                }
+            }
+
+            // Save the resized image as a high-quality JPEG
+            $filePath = $this->uploadDir . $newFilename;
+            $image->save($filePath, 85, 'jpg');
+            
+            return $newFilename;
+        } catch (\Exception $e) {
+            throw new \Exception('Image upload failed: ' . $e->getMessage());
+        }
+    }
+
     #[Route('', name: 'app_evenement_index', methods: ['GET'])]
     public function index(EvenementRepository $evenementsRepository): Response
     {
@@ -27,7 +94,7 @@ final class EvenementController extends AbstractController{
     }
 
     //Api
-    #[Route('/api', name:'appi_evenements',methods:['GET'])]
+    #[Route('/admin/api', name:'appi_evenements',methods:['GET'])]
     public function getAllEvenements (EvenementRepository $evenementsRepository):Response
     {
         $evenements= $evenementsRepository->findAll();
@@ -47,18 +114,18 @@ final class EvenementController extends AbstractController{
                 'date_debut'=> $formatter->format($event->getDateDebut()), 
                 'date_fin'=> $formatter->format($event->getDateFin()),
                 'lieu'=> $event->getLieu(),
-                'image' => $this->getParameter('app.base_url')."photos/".$event->getImage(),
+                'image' => $this->getPhotoUrl($event->getImage(), 'evenements'),
                 'site_url'=> $event->getSiteUrl(),
                 'artiste_principal' => $event->getArtistePrincipal() ? [
                     'id' => $event->getArtistePrincipal()->getId(),
                     'nom' => $event->getArtistePrincipal()->getNom(),
-                    'photo' => $this->getParameter('app.base_url')."photos/" . $event->getArtistePrincipal()->getPhoto(),
+                    'photo' => $this->getPhotoUrl($event->getArtistePrincipal()->getPhoto(), 'artistes'),
                 ] : null,
                 'artistes' => array_map(function ($artiste) {
                     return [
                         'id' => $artiste->getId(),
                         'nom' => $artiste->getNom(),
-                        'photo' => $this->getParameter('app.base_url')."photos/" . $artiste->getPhoto(),
+                        'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                     ];
                 }, $event->getArtists()->toArray()),
                 'published' => $event->isPublished(),
@@ -89,18 +156,18 @@ final class EvenementController extends AbstractController{
                 'date_debut'=> $formatter->format($event->getDateDebut()), 
                 'date_fin'=> $formatter->format($event->getDateFin()),
                 'lieu'=> $event->getLieu(),
-                'image' => $this->getParameter('app.base_url')."photos/".$event->getImage(),
+                'image' => $this->getPhotoUrl($event->getImage(), 'evenements'),
                 'site_url'=> $event->getSiteUrl(),
                 'artiste_principal' => $event->getArtistePrincipal() ? [
                     'id' => $event->getArtistePrincipal()->getId(),
                     'nom' => $event->getArtistePrincipal()->getNom(),
-                    'photo' => $this->getParameter('app.base_url')."photos/" . $event->getArtistePrincipal()->getPhoto(),
+                    'photo' => $this->getPhotoUrl($event->getArtistePrincipal()->getPhoto(), 'artistes'),
                 ] : null,
                 'artistes' => array_map(function ($artiste) {
                     return [
                         'id' => $artiste->getId(),
                         'nom' => $artiste->getNom(),
-                        'photo' => $this->getParameter('app.base_url')."photos/" . $artiste->getPhoto(),
+                        'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                     ];
                 }, $event->getArtists()->toArray()),
                 'published' => $event->isPublished(),
@@ -111,7 +178,66 @@ final class EvenementController extends AbstractController{
         return $this->json($data);
     }
 
-    #[Route('/api/add', name: 'api_evenement_add', methods: ['POST'])]
+    #[Route('/api/{id}', name: 'api_evenement_show', methods: ['GET'])]
+    public function showEvenement(EvenementRepository $evenementsRepository, Evenement $evenement): JsonResponse
+    {
+        $evenements = $evenementsRepository->findBy(['id' => $evenement->getId()]);
+        
+        $formatter = new IntlDateFormatter(
+            'fr_FR',
+            IntlDateFormatter::LONG,
+            IntlDateFormatter::NONE
+        );
+
+        $data= array_map(function(Evenement $event) use ($formatter)
+        {
+            return [
+                'id'=> $event->getId(),
+                'titre'=> $event->getTitre(),
+                'description'=> $event->getDescription(),
+                'date_debut'=> $formatter->format($event->getDateDebut()), 
+                'date_fin'=> $formatter->format($event->getDateFin()),
+                'lieu'=> $event->getLieu(),
+                'image' => $this->getPhotoUrl($event->getImage(), 'evenements'),
+                'site_url'=> $event->getSiteUrl(),
+                'oeuvres' => array_map(function ($oeuvre) {
+                    return [
+                        'id' => $oeuvre->getId(),
+                        'titre' => $oeuvre->getTitre(),
+                        'description' => $oeuvre->getDescription(),
+                        'image_principale' => $this->getPhotoUrl($oeuvre->getImagePrincipale(), 'oeuvres'),
+                        'prix' => $oeuvre->getPrix(),
+                        'stock' => $oeuvre->getStock(),
+                    ];
+                }, $event->getOeuvres()->toArray()),
+                'medias' => array_map(function ($media) {
+                return [
+                    'id' => $media->getId(),
+                    'titre' => $media->getTitre(),
+                    'image' => $this->getPhotoUrl($media->getImage(), 'medias'),
+                    'link_url' => $media->getLinkUrl(),
+                ];
+            }, $event->getMedias()->toArray()),
+                'artiste_principal' => $event->getArtistePrincipal() ? [
+                    'id' => $event->getArtistePrincipal()->getId(),
+                    'nom' => $event->getArtistePrincipal()->getNom(),
+                    'photo' => $this->getPhotoUrl($event->getArtistePrincipal()->getPhoto(), 'artistes'),
+                ] : null,
+                'artistes' => array_map(function ($artiste) {
+                    return [
+                        'id' => $artiste->getId(),
+                        'nom' => $artiste->getNom(),
+                        'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
+                    ];
+                }, $event->getArtists()->toArray()),
+                'published' => $event->isPublished(),
+            ];
+
+        }, $evenements);
+
+        return $this->json($data);
+    }
+    #[Route('/admin/api/', name: 'api_evenement_add', methods: ['POST'])]
     public function addEvenement(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): JsonResponse
     {
         try {
@@ -144,23 +270,12 @@ final class EvenementController extends AbstractController{
                 $evenement->setSiteUrl($data['site_url'] ?? '');
                 $evenement->setPublished($data['published'] ?? false);
 
-                // Gestion de l'image
                 if (!empty($data['image'])) {
-                    // Si l'image est une URL (déjà uploadée)
-                    if (filter_var($data['image'], FILTER_VALIDATE_URL)) {
-                        $evenement->setImage(basename($data['image']));
-                    } else {
-                        // Si c'est une nouvelle image en base64
-                        $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $data['image']));
-                        if ($imageData) {
-                            $filename = 'event-'.uniqid() . '.jpg';
-                            $uploadDir = $this->getParameter('kernel.project_dir').'/public/photos';
-                            if (!file_exists($uploadDir)) {
-                                mkdir($uploadDir, 0777, true);
-                            }
-                            file_put_contents($uploadDir . '/' . $filename, $imageData);
-                            $evenement->setImage($filename);
-                        }
+                    try {
+                        $imagePath = $this->handleImageUpload($data['image']);
+                        $evenement->setImage($imagePath);
+                    } catch (\Exception $e) {
+                        return $this->json(['error' => 'Image upload failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
                     }
                 }
 
@@ -223,7 +338,7 @@ final class EvenementController extends AbstractController{
         }
     }
 
-    #[Route('/api/edit/{id}', name: 'api_evenement_edit', methods: ['PUT'])]
+    #[Route('/admin/api/{id}', name: 'api_evenement_edit', methods: ['PUT'])]
     public function edit(Request $request, Evenement $evenement, EntityManagerInterface $em, SluggerInterface $slugger): JsonResponse
     {
         try {
@@ -256,29 +371,27 @@ final class EvenementController extends AbstractController{
             }
 
             // Gestion de l'image
-            if (!empty($data['image'])) {
-                try {
-                    // Si l'image est une URL (déjà uploadée)
-                    if (filter_var($data['image'], FILTER_VALIDATE_URL)) {
-                        $evenement->setImage(basename($data['image']));
-                    } else {
-                        // Si c'est une nouvelle image en base64
-                        $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $data['image']));
-                        if ($imageData) {
-                            $filename = 'event-'.uniqid() . '.jpg';
-                            $uploadDir = $this->getParameter('kernel.project_dir').'/public/photos';
-                            if (!file_exists($uploadDir)) {
-                                mkdir($uploadDir, 0777, true);
-                            }
-                            file_put_contents($uploadDir . '/' . $filename, $imageData);
-                            $evenement->setImage($filename);
+            if (isset($data['image'])) {
+                if (!empty($data['image']) && strpos($data['image'], 'data:image') === 0) {
+                    // New base64 image uploaded - delete old image first
+                    $oldImage = $evenement->getImage();
+                        if ($oldImage && !empty($oldImage)) {
+                            $this->deleteOldImage($oldImage);
                         }
+                        
+                        // Upload new image
+                        try {
+                            $imagePath = $this->handleImageUpload($data['image']);
+                            $evenement->setImage($imagePath);
+                        } catch (\Exception $e) {
+                            return $this->json(['error' => 'Image upload failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+                        }
+                    } elseif (!empty($data['image'])) {
+                        // Existing image URL
+                        $evenement->setImage($data['image']);
                     }
-                } catch (\Exception $e) {
-                    error_log('Error processing image: ' . $e->getMessage());
-                    return new JsonResponse(['error' => 'Erreur lors du traitement de l\'image: ' . $e->getMessage()], Response::HTTP_BAD_REQUEST);
                 }
-            }
+             
 
             // Gestion de l'artiste principal
             if (!empty($data['artiste_principal'])) {
@@ -348,7 +461,7 @@ final class EvenementController extends AbstractController{
         }
     }
 
-    #[Route('/{id}', name: 'api_evenement_delete', methods: ['DELETE'])]
+    #[Route('/admin/api/{id}', name: 'api_evenement_delete', methods: ['DELETE'])]
     public function delete(Evenement $evenement, EntityManagerInterface $em): JsonResponse
     {
         if (!$evenement) {
@@ -361,18 +474,42 @@ final class EvenementController extends AbstractController{
         return new JsonResponse(['message' => 'Événement supprimé avec succès'], Response::HTTP_OK);
     }
 
-    #[Route('/supprimer/{id}', name: 'api_evenement_delete_by_id', methods: ['DELETE'])]
-    public function deleteById($id, EntityManagerInterface $em): JsonResponse
+    private function deleteOldImage($oldPhotoPath): void
     {
-        $evenement = $em->getRepository(Evenement::class)->find($id);
-
-        if (!$evenement) {
-            return new JsonResponse(['message' => 'Événement non trouvé'], Response::HTTP_NOT_FOUND);
+        if (!$oldPhotoPath || empty($oldPhotoPath)) {
+            return;
         }
 
-        $em->remove($evenement);
-        $em->flush();
+        // Remove any URL prefix to get just the filename
+        $filename = basename($oldPhotoPath);
+        
+        // Construct the full file path
+        $fullPath = $this->uploadDir . $filename;
+        
+        // Check if file exists and delete it
+        if (file_exists($fullPath)) {
+            if (unlink($fullPath)) {
+                error_log('Successfully deleted old image: ' . $fullPath);
+            } else {
+                error_log('Failed to delete old image: ' . $fullPath);
+            }
+        } else {
+            error_log('Old image file not found: ' . $fullPath);
+        }
+    }
 
-        return new JsonResponse(['message' => 'Événement supprimé avec succès'], Response::HTTP_OK);
+    private function getPhotoUrl($photoPath, string $folder): string
+    {
+        if (!$photoPath) {
+            return '';
+        }
+        
+        // If the photo path already contains a full URL, return it as is
+        if (strpos($photoPath, 'http://') === 0 || strpos($photoPath, 'https://') === 0) {
+            return $photoPath;
+        }
+        
+        // Otherwise, construct the full URL
+        return $this->getParameter('app.base_url') . "uploads/" . $folder . "/" . $photoPath;
     }
 }

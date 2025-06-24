@@ -9,7 +9,7 @@ const Actualites = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/actualites/api?page=${page}&limit=3`);
+        const response = await fetch(`/actualites/api`);
         if (!response.ok) throw new Error('Failed to fetch actualites');
         const data = await response.json();
         

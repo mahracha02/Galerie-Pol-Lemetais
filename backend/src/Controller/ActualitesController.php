@@ -266,4 +266,143 @@ final class ActualitesController extends AbstractController{
 
         return $this->json(['message' => 'Actualité supprimée avec succès'], Response::HTTP_OK);    
     }
+
+    // === ADMIN API ENDPOINTS ===
+    #[Route('/admin/api', name: 'api_actualites_admin_list', methods: ['GET'])]
+    public function adminList(): JsonResponse
+    {
+        $actualites = $this->actualitesRepository->findAll();
+        $data = array_map(function (Actualites $actu) {
+            return [
+                'id' => $actu->getId(),
+                'titre' => $actu->getTitre(),
+                'description' => $actu->getDescription(),
+                'date' => $actu->getDate() ? $actu->getDate()->format('Y-m-d') : null,
+                'image' => $this->getPhotoUrl($actu->getImage(), 'actualites'),
+                'link' => $actu->getLink() ?? '#',
+                'nouveau' => $actu->isNouveau() ?? false,
+                'published' => $actu->isPublished() ?? false,
+            ];
+        }, $actualites);
+        return $this->json($data);
+    }
+
+    #[Route('/admin/api/{id}', name: 'api_actualites_admin_show', methods: ['GET'])]
+    public function adminShow(int $id): JsonResponse
+    {
+        $actu = $this->actualitesRepository->find($id);
+        if (!$actu) {
+            return $this->json(['error' => 'Actualité non trouvée'], Response::HTTP_NOT_FOUND);
+        }
+        $data = [
+            'id' => $actu->getId(),
+            'titre' => $actu->getTitre(),
+            'description' => $actu->getDescription(),
+            'date' => $actu->getDate() ? $actu->getDate()->format('Y-m-d') : null,
+            'image' => $this->getPhotoUrl($actu->getImage(), 'actualites'),
+            'link' => $actu->getLink() ?? '#',
+            'nouveau' => $actu->isNouveau() ?? false,
+            'published' => $actu->isPublished() ?? false,
+        ];
+        return $this->json($data);
+    }
+
+    #[Route('/admin/api', name: 'api_actualites_admin_create', methods: ['POST'])]
+    public function adminCreate(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!$data) {
+            return $this->json(['error' => 'Invalid JSON data'], Response::HTTP_BAD_REQUEST);
+        }
+        $actualite = new Actualites();
+        $actualite->setTitre($data['titre'] ?? '');
+        $actualite->setDescription($data['description'] ?? '');
+        $actualite->setDate(isset($data['date']) ? new \DateTime($data['date']) : new \DateTime());
+        if (!empty($data['image'])) {
+            try {
+                $imagePath = $this->handleImageUpload($data['image']);
+                $actualite->setImage($imagePath);
+            } catch (\Exception $e) {
+                return $this->json(['error' => 'Image upload failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+        }
+        $actualite->setLink($data['link'] ?? '');
+        $actualite->setNouveau($data['nouveau'] ?? false);
+        $actualite->setPublished($data['published'] ?? false);
+        $this->entityManager->persist($actualite);
+        $this->entityManager->flush();
+        return $this->json(['id' => $actualite->getId()], Response::HTTP_CREATED);
+    }
+
+    #[Route('/admin/api/{id}', name: 'api_actualites_admin_update', methods: ['PUT'])]
+    public function adminUpdate(Request $request, int $id): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        if (!$data) {
+            return $this->json(['error' => 'Invalid JSON data'], Response::HTTP_BAD_REQUEST);
+        }
+        $actualite = $this->actualitesRepository->find($id);
+        if (!$actualite) {
+            return $this->json(['error' => 'Actualité non trouvée'], Response::HTTP_NOT_FOUND);
+        }
+        if (array_key_exists('titre', $data)) $actualite->setTitre($data['titre']);
+        if (array_key_exists('description', $data)) $actualite->setDescription($data['description']);
+        if (array_key_exists('date', $data)) $actualite->setDate(new \DateTime($data['date']));
+        if (isset($data['image'])) {
+            if (!empty($data['image']) && strpos($data['image'], 'data:image') === 0) {
+                $oldImage = $actualite->getImage();
+                if ($oldImage && !empty($oldImage)) {
+                    $this->deleteOldImage($oldImage);
+                }
+                try {
+                    $imagePath = $this->handleImageUpload($data['image']);
+                    $actualite->setImage($imagePath);
+                } catch (\Exception $e) {
+                    return $this->json(['error' => 'Image upload failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+                }
+            } elseif (empty($data['image'])) {
+                $actualite->setImage(null);
+            }
+        }
+        if (array_key_exists('link', $data)) $actualite->setLink($data['link']);
+        if (array_key_exists('nouveau', $data)) $actualite->setNouveau($data['nouveau']);
+        if (array_key_exists('published', $data)) $actualite->setPublished($data['published']);
+        $this->entityManager->persist($actualite);
+        $this->entityManager->flush();
+        return $this->json(['id' => $actualite->getId()], Response::HTTP_OK);
+    }
+
+    #[Route('/admin/api/{id}', name: 'api_actualites_admin_delete', methods: ['DELETE'])]
+    public function adminDelete(int $id): JsonResponse
+    {
+        $actualite = $this->actualitesRepository->find($id);
+        if (!$actualite) {
+            return $this->json(['error' => 'Actualité non trouvée'], Response::HTTP_NOT_FOUND);
+        }
+        $oldImage = $actualite->getImage();
+        if ($oldImage && !empty($oldImage)) {
+            $this->deleteOldImage($oldImage);
+        }
+        $this->entityManager->remove($actualite);
+        $this->entityManager->flush();
+        return $this->json(['success' => true], Response::HTTP_NO_CONTENT);
+    }
+
+    private function deleteOldImage($oldPhotoPath): void
+    {
+        if (!$oldPhotoPath || empty($oldPhotoPath)) {
+            return;
+        }
+        $filename = basename($oldPhotoPath);
+        $fullPath = $this->uploadDir . $filename;
+        if (file_exists($fullPath)) {
+            @unlink($fullPath);
+        }
+    }
+    private function getPhotoUrl($photoPath, $folder): string
+    {
+        if (!$photoPath) return '';
+        if (str_starts_with($photoPath, 'http://') || str_starts_with($photoPath, 'https://')) return $photoPath;
+        return $this->getParameter('app.base_url') . 'uploads/' . $folder . '/' . $photoPath;
+    }
 }

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\OeuvreRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -20,13 +22,7 @@ class Oeuvre
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
 
-    
 
-    #[ORM\ManyToOne]
-    private ?Exposition $exposition_id = null;
-
-    #[ORM\ManyToOne]
-    private ?Evenement $evenement_id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $image_principale = null;
@@ -55,6 +51,23 @@ class Oeuvre
 
     #[ORM\Column]
     private ?float $prix = null;
+
+    #[ORM\ManyToOne(inversedBy: 'oeuvres')]
+    private ?exposition $exposition = null;
+
+    /**
+     * @var Collection<int, evenement>
+     */
+    #[ORM\ManyToMany(targetEntity: evenement::class, inversedBy: 'oeuvres')]
+    private Collection $evenement;
+
+    #[ORM\Column]
+    private ?bool $published = null;
+
+    public function __construct()
+    {
+        $this->evenement = new ArrayCollection();
+    }
 
     
 
@@ -87,31 +100,6 @@ class Oeuvre
         return $this;
     }
 
-    
-
-    public function getExpositionId(): ?Exposition
-    {
-        return $this->exposition_id;
-    }
-
-    public function setExpositionId(?Exposition $exposition_id): static
-    {
-        $this->exposition_id = $exposition_id;
-
-        return $this;
-    }
-
-    public function getEvenementId(): ?Evenement
-    {
-        return $this->evenement_id;
-    }
-
-    public function setEvenementId(?Evenement $evenement_id): static
-    {
-        $this->evenement_id = $evenement_id;
-
-        return $this;
-    }
 
     public function getImagePrincipale(): ?string
     {
@@ -217,6 +205,54 @@ class Oeuvre
     public function setPrix(float $prix): static
     {
         $this->prix = $prix;
+
+        return $this;
+    }
+
+    public function getExposition(): ?exposition
+    {
+        return $this->exposition;
+    }
+
+    public function setExposition(?exposition $exposition): static
+    {
+        $this->exposition = $exposition;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, evenement>
+     */
+    public function getEvenement(): Collection
+    {
+        return $this->evenement;
+    }
+
+    public function addEvenement(evenement $evenement): static
+    {
+        if (!$this->evenement->contains($evenement)) {
+            $this->evenement->add($evenement);
+        }
+
+        return $this;
+    }
+
+    public function removeEvenement(evenement $evenement): static
+    {
+        $this->evenement->removeElement($evenement);
+
+        return $this;
+    }
+
+    public function isPublished(): ?bool
+    {
+        return $this->published;
+    }
+
+    public function setPublished(bool $published): static
+    {
+        $this->published = $published;
 
         return $this;
     }

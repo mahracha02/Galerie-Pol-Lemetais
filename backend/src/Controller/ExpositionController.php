@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Exposition;
 use App\Entity\Actualites;
 use App\Entity\Artiste;
+use App\Entity\Catalogue;
 use App\Repository\ExpositionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -13,10 +14,78 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use App\Repository\ArtisteRepository;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Intervention\Image\ImageManager;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/expositions')]
 final class ExpositionController extends AbstractController
 {
+
+    private string $uploadDir;
+
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private ArtisteRepository $artisteRepository,
+        private SerializerInterface $serializer,
+        private SluggerInterface $slugger,
+        private ParameterBagInterface $params
+    ) {
+        $this->uploadDir = $this->params->get('kernel.project_dir') . '/public/uploads/expositions/';
+        if (!file_exists($this->uploadDir)) {
+            mkdir($this->uploadDir, 0777, true);
+        }
+    }
+    private function handleImageUpload($imageData): ?string
+    {
+        if (!$imageData) {
+            return null;
+        }
+
+        try {
+            // Check if the image data is base64
+            if (strpos($imageData, 'data:image') === 0) {
+                $parts = explode(',', $imageData);
+                if (count($parts) !== 2) {
+                    throw new \Exception('Invalid base64 image format');
+                }
+                $imageData = $parts[1];
+            }
+
+            // Decode base64 data
+            $decodedData = base64_decode($imageData);
+            if ($decodedData === false) {
+                throw new \Exception('Invalid base64 image data');
+            }
+            
+            // Create image manager instance with GD driver
+            $imageManager = ImageManager::withDriver(new \Intervention\Image\Drivers\Gd\Driver());
+            $image = $imageManager->read($decodedData);
+
+            // Crop and resize image to a 5:4 aspect ratio
+            $image->cover(800, 640);
+
+            // Generate unique filename
+            $newFilename = uniqid() . '.jpg';
+
+            // Ensure upload directory exists
+            if (!is_dir($this->uploadDir)) {
+                if (!mkdir($this->uploadDir, 0777, true)) {
+                    throw new \Exception('Failed to create upload directory');
+                }
+            }
+
+            // Save the resized image as a high-quality JPEG
+            $filePath = $this->uploadDir . $newFilename;
+            $image->save($filePath, 85, 'jpg');
+            
+            return $newFilename;
+        } catch (\Exception $e) {
+            throw new \Exception('Image upload failed: ' . $e->getMessage());
+        }
+    }
+
     // Affichage des expositions en Twig
     #[Route('', name: 'app_exposition_index', methods: ['GET'])]
     public function index(ExpositionRepository $expositionRepository): Response
@@ -29,7 +98,7 @@ final class ExpositionController extends AbstractController
     }
 
     // API: Liste des expositions en JSON
-    #[Route('/api', name: 'api_expositions', methods: ['GET'])]
+    #[Route('/admin/api', name: 'api_expositions', methods: ['GET'])]
     public function getAllExpositions(ExpositionRepository $expositionRepository): JsonResponse
     {
         $expositions = $expositionRepository->findAllOrderByDateDesc();
@@ -57,18 +126,24 @@ final class ExpositionController extends AbstractController
                 'annee' => $expo->getAnnee(),
                 'date_debut' => $formatter->format($expo->getDateDebut()),
                 'date_fin' => $formatter->format($expo->getDateFin()),
-                'image' => $this->getParameter('app.base_url')."photos/" . $expo->getImage(),
-                'catalogue' => $expo->getCatalogue(),
+                'visite_virtuelle_url' => $expo->getVisiteVirtuelleUrl(),
+                'image' => $this->getPhotoUrl($expo->getImage(), 'expositions'),
+                'catalogue' => $expo->getCatalogue() ? [
+                    'id' => $expo->getCatalogue()->getId(),
+                    'titre' => $expo->getCatalogue()->getTitre(),
+                    'image' => $this->getPhotoUrl($expo->getCatalogue()->getImage(), 'catalogues'),
+                    'link' => $expo->getCatalogue()->getLink(),
+                ] : null,
                 'artiste_principal' => $expo->getArtistePrincipal() ? [
                     'id' => $expo->getArtistePrincipal()->getId(),
                     'nom' => $expo->getArtistePrincipal()->getNom(),
-                    'photo' => $this->getParameter('app.base_url')."photos/" . $expo->getArtistePrincipal()->getPhoto(),
+                    'photo' => $this->getPhotoUrl($expo->getArtistePrincipal()->getPhoto(), 'artistes'),
                 ] : null,
                 'artistes' => array_map(function ($artiste) {
                     return [
                         'id' => $artiste->getId(),
                         'nom' => $artiste->getNom(),
-                        'photo' => $this->getParameter('app.base_url')."photos/" . $artiste->getPhoto(),
+                        'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                     ];
                 }, $expo->getArtists()->toArray()),
                 'published' => $expo->isPublished(),
@@ -97,18 +172,24 @@ final class ExpositionController extends AbstractController
                 'annee' => $expo->getAnnee(),
                 'date_debut' => $expo->getDateDebut()->format('Y-m-d'),
                 'date_fin' => $expo->getDateFin()->format('Y-m-d'),
-                'image' => $this->getParameter('app.base_url')."photos/" . $expo->getImage(),
-                'catalogue' => $expo->getCatalogue(),
+                'image' => $this->getPhotoUrl($expo->getImage(), 'expositions'),
+                'visite_virtuelle_url' => $expo->getVisiteVirtuelleUrl(),
+                'catalogue' => $expo->getCatalogue() ? [
+                    'id' => $expo->getCatalogue()->getId(),
+                    'titre' => $expo->getCatalogue()->getTitre(),
+                    'image' => $this->getPhotoUrl($expo->getCatalogue()->getImage(), 'catalogues'),
+                    'link' => $expo->getCatalogue()->getLink(),
+                ] : null,
                 'artiste_principal' => $expo->getArtistePrincipal() ? [
                     'id' => $expo->getArtistePrincipal()->getId(),
                     'nom' => $expo->getArtistePrincipal()->getNom(),
-                    'photo' => $this->getParameter('app.base_url')."photos/" . $expo->getArtistePrincipal()->getPhoto(),
+                    'photo' => $this->getPhotoUrl($expo->getArtistePrincipal()->getPhoto(), 'artistes'),
                 ] : null,
                 'artistes' => array_map(function ($artiste) {
                     return [
                         'id' => $artiste->getId(),
                         'nom' => $artiste->getNom(),
-                        'photo' => $this->getParameter('app.base_url')."photos/" . $artiste->getPhoto(),
+                        'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                     ];
                 }, $expo->getArtists()->toArray()),
             ];
@@ -134,19 +215,57 @@ final class ExpositionController extends AbstractController
             'annee' => $exposition->getAnnee(),
             'date_debut' => $formatter->format($exposition->getDateDebut()),
             'date_fin' => $formatter->format($exposition->getDateFin()),
-            'image' => $this->getParameter('app.base_url') . "photos/" . $exposition->getImage(),
-            'catalogue' => $exposition->getCatalogue(),
+            'image' => $this->getPhotoUrl($exposition->getImage(), 'expositions'),
+            'visite_virtuelle_url' => $exposition->getVisiteVirtuelleUrl(),
+            'medias' => array_map(function ($media) {
+                return [
+                    'id' => $media->getId(),
+                    'titre' => $media->getTitre(),
+                    'image' => $this->getPhotoUrl($media->getImage(), 'medias'),
+                    'link_url' => $media->getLinkUrl(),
+                ];
+            }, $exposition->getMedias()->toArray()),
+            'oeuvres' => array_map(function ($oeuvre) {
+                return [
+                    'id' => $oeuvre->getId(),
+                    'titre' => $oeuvre->getTitre(),
+                    'image_principale' => $this->getPhotoUrl($oeuvre->getImagePrincipale(), 'oeuvres'),
+                    'dimensions' => $oeuvre->getDimensions(),
+                    'annee' => $oeuvre->getAnnee(),
+                    'technique' => $oeuvre->getTechnique(),
+                    'remarque' => $oeuvre->getRemarque(),
+                    'artiste' => [
+                        'id' => $oeuvre->getArtiste()->getId(),
+                        'nom' => $oeuvre->getArtiste()->getNom(),
+                        'photo' => $this->getPhotoUrl($oeuvre->getArtiste()->getPhoto(), 'artistes'),
+                    ],
+                ];
+            }, $exposition->getOeuvres()->toArray()),
+            'medias' => array_map(function ($media) {
+                return [
+                    'id' => $media->getId(),
+                    'titre' => $media->getTitre(),
+                    'image' => $this->getPhotoUrl($media->getImage(), 'medias'),
+                    'link_url' => $media->getLinkUrl(),
+                ];
+            }, $exposition->getMedias()->toArray()),
+            'catalogue' => $exposition->getCatalogue() ? [
+                'id' => $exposition->getCatalogue()->getId(),
+                'titre' => $exposition->getCatalogue()->getTitre(),
+                'image' => $this->getPhotoUrl($exposition->getCatalogue()->getImage(), 'catalogues'),
+                'link' => $exposition->getCatalogue()->getLink(),
+            ] : null,
             'artiste_principal' => $exposition->getArtistePrincipal() ? [
                 'id' => $exposition->getArtistePrincipal()->getId(),
                 'nom' => $exposition->getArtistePrincipal()->getNom(),
-                'photo' => $this->getParameter('app.base_url')."photos/" . $exposition->getArtistePrincipal()->getPhoto(),
+                'photo' => $this->getPhotoUrl($exposition->getArtistePrincipal()->getPhoto(), 'artistes'),
                 'bio' => $exposition->getArtistePrincipal()->getBio(),
             ] : null,
             'artistes' => array_map(function ($artiste) {
                 return [
                     'id' => $artiste->getId(),
                     'nom' => $artiste->getNom(),
-                    'photo' => $this->getParameter('app.base_url')."photos/" . $artiste->getPhoto(),
+                    'photo' => $this->getPhotoUrl($artiste->getPhoto(), 'artistes'),
                 ];
             }, $exposition->getArtists()->toArray()),
             'published' => $exposition->isPublished(),
@@ -154,7 +273,7 @@ final class ExpositionController extends AbstractController
     }
 
     // API: Ajouter une nouvelle exposition
-    #[Route('/api/add', name: 'api_exposition_add', methods: ['POST'])]
+    #[Route('/admin/api/', name: 'api_exposition_add', methods: ['POST'])]
     public function createExposition(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): JsonResponse
     {
         try {
@@ -189,41 +308,15 @@ final class ExpositionController extends AbstractController
                 $exposition->setCatalogue($data['catalogue'] ?? '');
                 $exposition->setPublished($data['published'] ?? false);
 
-                // Gestion de l'image
                 if (!empty($data['image'])) {
-                    // Si l'image est une URL (déjà uploadée)
-                    if (filter_var($data['image'], FILTER_VALIDATE_URL)) {
-                        $exposition->setImage(basename($data['image']));
-                    } else if (strpos($data['image'], 'data:image') === 0) {
-                        // Si c'est une nouvelle image en base64
-                        try {
-                            // Extraire le type MIME et les données base64
-                            if (preg_match('/^data:image\/(jpeg|png|jpg);base64,/', $data['image'], $matches)) {
-                                $imageType = $matches[1];
-                                $imageData = base64_decode(preg_replace('/^data:image\/(jpeg|png|jpg);base64,/', '', $data['image']));
-                                
-                                if ($imageData) {
-                                    $filename = 'expo-'.uniqid() . '.' . $imageType;
-                                    $uploadDir = $this->getParameter('kernel.project_dir').'/public/photos';
-                                    if (!file_exists($uploadDir)) {
-                                        mkdir($uploadDir, 0777, true);
-                                    }
-                                    file_put_contents($uploadDir . '/' . $filename, $imageData);
-                                    $exposition->setImage($filename);
-                                }
-                            } else {
-                                throw new \Exception('Format d\'image non supporté. Utilisez JPEG ou PNG.');
-                            }
-                        } catch (\Exception $e) {
-                            $em->rollback();
-                            return new JsonResponse([
-                                'success' => false,
-                                'error' => 'Erreur lors du traitement de l\'image',
-                                'details' => $e->getMessage()
-                            ], Response::HTTP_BAD_REQUEST);
-                        }
+                    try {
+                        $imagePath = $this->handleImageUpload($data['image']);
+                        $exposition->setImage($imagePath);
+                    } catch (\Exception $e) {
+                        return $this->json(['error' => 'Image upload failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
                     }
                 }
+            
 
                 // Gestion de l'artiste principal
                 if (!empty($data['artiste_principal'])) {
@@ -311,7 +404,7 @@ final class ExpositionController extends AbstractController
     }
 
     // API: Modifier une exposition
-    #[Route('/api/edit/{id}', name: 'api_exposition_edit', methods: ['PUT'])]
+    #[Route('/admin/api/{id}', name: 'api_exposition_edit', methods: ['PUT'])]
     public function editExposition(Request $request, Exposition $exposition, EntityManagerInterface $em, SluggerInterface $slugger): JsonResponse
     {
         try {
@@ -340,44 +433,37 @@ final class ExpositionController extends AbstractController
                 $exposition->setAnnee($data['annee'] ?? date('Y'));
                 $exposition->setDateDebut(new \DateTime($data['date_debut']));
                 $exposition->setDateFin(new \DateTime($data['date_fin']));
-                $exposition->setCatalogue($data['catalogue'] ?? '');
                 $exposition->setPublished($data['published'] ?? false);
 
-                // Gestion de l'image
-                if (!empty($data['image'])) {
-                    // Si l'image est une URL (déjà uploadée)
-                    if (filter_var($data['image'], FILTER_VALIDATE_URL)) {
-                        $exposition->setImage(basename($data['image']));
-                    } else if (strpos($data['image'], 'data:image') === 0) {
-                        // Si c'est une nouvelle image en base64
-                        try {
-                            // Extraire le type MIME et les données base64
-                            if (preg_match('/^data:image\/(jpeg|png|jpg);base64,/', $data['image'], $matches)) {
-                                $imageType = $matches[1];
-                                $imageData = base64_decode(preg_replace('/^data:image\/(jpeg|png|jpg);base64,/', '', $data['image']));
-                                
-                                if ($imageData) {
-                                    $filename = 'expo-'.uniqid() . '.' . $imageType;
-                                    $uploadDir = $this->getParameter('kernel.project_dir').'/public/photos';
-                                    if (!file_exists($uploadDir)) {
-                                        mkdir($uploadDir, 0777, true);
-                                    }
-                                    file_put_contents($uploadDir . '/' . $filename, $imageData);
-                                    $exposition->setImage($filename);
-                                }
-                            } else {
-                                throw new \Exception('Format d\'image non supporté. Utilisez JPEG ou PNG.');
-                            }
-                        } catch (\Exception $e) {
-                            return new JsonResponse([
-                                'success' => false,
-                                'error' => 'Erreur lors du traitement de l\'image',
-                                'details' => $e->getMessage()
-                            ], Response::HTTP_BAD_REQUEST);
+                // Handle image update
+                if (isset($data['image'])) {
+                    if (!empty($data['image']) && strpos($data['image'], 'data:image') === 0) {
+                        // New base64 image uploaded - delete old image first
+                        $oldImage = $exposition->getImage();
+                        if ($oldImage && !empty($oldImage)) {
+                            $this->deleteOldImage($oldImage);
                         }
+                        
+                        // Upload new image
+                        try {
+                            $imagePath = $this->handleImageUpload($data['image']);
+                            $exposition->setImage($imagePath);
+                        } catch (\Exception $e) {
+                            return $this->json(['error' => 'Image upload failed: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+                        }
+                    } elseif (!empty($data['image'])) {
+                        // Existing image URL
+                        $exposition->setImage($data['image']);
                     }
                 }
-
+                
+                // Gestion du catalogue
+                if (isset($data['catalogue']) && !empty($data['catalogue'])) {
+                    $catalogue = $em->getRepository(Catalogue::class)->find($data['catalogue']);
+                    if ($catalogue) {
+                        $exposition->setCatalogue($catalogue);
+                    }
+                }
                 // Gestion de l'artiste principal
                 if (!empty($data['artiste_principal'])) {
                     $artiste = $em->getRepository(Artiste::class)->find($data['artiste_principal']);
@@ -407,7 +493,7 @@ final class ExpositionController extends AbstractController
                         $actualite->setDate(new \DateTime());
                         $actualite->setDescription($exposition->getDescription());
                         $actualite->setImage($exposition->getImage());
-                        $actualite->setLink($exposition->getCatalogue());
+                        $actualite->setLink('test.com'); // Remplacer par le lien réel si nécessaire
                         $actualite->setNouveau(true);
                         $actualite->setPublished($exposition->isPublished());
                     }
@@ -417,7 +503,7 @@ final class ExpositionController extends AbstractController
                     $actualite->setDate(new \DateTime());
                     $actualite->setDescription($exposition->getDescription());
                     $actualite->setImage($exposition->getImage());
-                    $actualite->setLink($exposition->getCatalogue());
+                    $actualite->setLink('test.com'); // Remplacer par le lien réel si nécessaire
                     $actualite->setNouveau(true);
                     $actualite->setPublished($exposition->isPublished());
                     $actualite->setExposition($exposition);
@@ -451,7 +537,7 @@ final class ExpositionController extends AbstractController
         }
     }
 
-    #[Route('/api/{id}', name: 'api_exposition_delete', methods: ['DELETE'])]
+    #[Route('/admin/api/{id}', name: 'api_exposition_delete', methods: ['DELETE'])]
     public function deleteExposition(Exposition $exposition, EntityManagerInterface $em): JsonResponse
     {
         try {
@@ -471,35 +557,42 @@ final class ExpositionController extends AbstractController
         }
     }
 
-    private function handleImageUpload(Request $request, SluggerInterface $slugger): ?string
+    private function deleteOldImage($oldPhotoPath): void
     {
-        $uploadedFile = $request->files->get('image');
+        if (!$oldPhotoPath || empty($oldPhotoPath)) {
+            return;
+        }
+
+        // Remove any URL prefix to get just the filename
+        $filename = basename($oldPhotoPath);
         
-        if (!$uploadedFile) {
-            return null;
+        // Construct the full file path
+        $fullPath = $this->uploadDir . $filename;
+        
+        // Check if file exists and delete it
+        if (file_exists($fullPath)) {
+            if (unlink($fullPath)) {
+                error_log('Successfully deleted old image: ' . $fullPath);
+            } else {
+                error_log('Failed to delete old image: ' . $fullPath);
+            }
+        } else {
+            error_log('Old image file not found: ' . $fullPath);
         }
+    }
 
-        // Validate the file
-        $allowedMimeTypes = ['image/jpeg', 'image/png'];
-        if (!in_array($uploadedFile->getMimeType(), $allowedMimeTypes)) {
-            throw new \RuntimeException('Invalid file type. Only JPEG and PNG are allowed.');
+    private function getPhotoUrl($photoPath, $folder): string
+    {
+        if (!$photoPath) {
+            return '';
         }
-
-        // Validate file size (e.g., 2MB max)
-        $maxSize = 2 * 1024 * 1024;
-        if ($uploadedFile->getSize() > $maxSize) {
-            throw new \RuntimeException('File is too large. Maximum size is 2MB.');
+        
+        // If the photo path already contains a full URL, return it as is
+        if (strpos($photoPath, 'http://') === 0 || strpos($photoPath, 'https://') === 0) {
+            return $photoPath;
         }
-
-        // Generate a safe filename
-        $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
-        $safeFilename = $slugger->slug($originalFilename);
-        $newFilename = $safeFilename.'-'.uniqid().'.'.$uploadedFile->guessExtension();
-
-        // Move the file to the uploads directory
-        $uploadDir = $this->getParameter('uploads_directory');
-        $uploadedFile->move($uploadDir, $newFilename);
-
-        return $newFilename;
+        
+        // Otherwise, construct the full URL
+        return $this->getParameter('app.base_url') . "uploads/" . $folder . "/" . $photoPath;
     }
 }
