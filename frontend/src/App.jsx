@@ -89,7 +89,8 @@ const App = () => {
             </div>
           } />
 
-          {/* Public routes: navbar/footer layout */}
+          
+          <Route path="/login" element={<Login />} />
           <Route path="*" element={
             <div className="min-h-screen flex flex-col">
               <Navbar />
@@ -109,7 +110,6 @@ const App = () => {
                   <Route path="/boutique/catalogues/:id" element={<DetailsCatalogue />} />
                   <Route path="/boutique/oeuvres/:id" element={<DetailsOeuvre />} />
                   <Route path="/contact" element={<Contact />} />
-                  <Route path="/login" element={<Login />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </main>
