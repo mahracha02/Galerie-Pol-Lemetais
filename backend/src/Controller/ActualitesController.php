@@ -132,7 +132,7 @@ final class ActualitesController extends AbstractController{
                 'title' => $actu->getTitre(),
                 'date' => $actu->getDate() ? $actu->getDate()->format('Y-m-d') : null,
                 'description' => $actu->getDescription(),
-                'image' => $this->getParameter('app.base_url').'/uploads/actualites/' . $actu->getImage(),
+                'image' => $this->getPhotoUrl($actu->getImage(), 'actualites'),
                 'link' => $actu->getLink() ?? '#',
                 'nouveau' => $actu->isNouveau() ?? false,
                 'published' => $actu->isPublished() ?? false,
@@ -159,7 +159,7 @@ final class ActualitesController extends AbstractController{
                 'title' => $actu->getTitre(),
                 'date' => $actu->getDate() ? $actu->getDate()->format('Y-m-d') : null,
                 'description' => $actu->getDescription(),
-                'image' => $this->getParameter('app.base_url').'/uploads/actualites/' . $actu->getImage(),
+                'image' => $this->getPhotoUrl($actu->getImage(), 'actualites'),
                 'link' => $actu->getLink() ?? '#',
                 'nouveau' => $actu->isNouveau() ?? false,
                 'published' => $actu->isPublished() ?? false,
@@ -180,7 +180,7 @@ final class ActualitesController extends AbstractController{
             'title' => $actualite->getTitre(),
             'date' => $actualite->getDate() ? $actualite->getDate()->format('Y-m-d') : null,
             'description' => $actualite->getDescription(),
-            'image' => $actualite->getImage() ? '/uploads/actualites/' . $actualite->getImage() : null,
+            'image' => $this->getPhotoUrl($actualite->getImage(), 'actualites'),
             'link' => $actualite->getLink() ?? '#',
             'nouveau' => $actualite->isNouveau() ?? false,
         ];
@@ -399,10 +399,19 @@ final class ActualitesController extends AbstractController{
             @unlink($fullPath);
         }
     }
-    private function getPhotoUrl($photoPath, $folder): string
+    private function getPhotoUrl($photoPath, string $folder): string
     {
-        if (!$photoPath) return '';
-        if (str_starts_with($photoPath, 'http://') || str_starts_with($photoPath, 'https://')) return $photoPath;
-        return $this->getParameter('app.base_url') . 'uploads/' . $folder . '/' . $photoPath;
+        if (!$photoPath) {
+            return '';
+        }
+        
+        // If the photo path already contains a full URL, return it as is
+        if (strpos($photoPath, 'http://') === 0 || strpos($photoPath, 'https://') === 0) {
+            return $photoPath;
+        }
+        
+        
+        // Otherwise, construct the full URL
+        return $this->getParameter('app.base_url') . "uploads/" . $folder . "/" . $photoPath;
     }
 }

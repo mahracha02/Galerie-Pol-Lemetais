@@ -1,20 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Calendar, 
-  Clock, 
-  ChevronRight, 
-  Mail, 
-  Star, 
+import {  
   Loader2, 
-  List, 
-  Grid, 
-  AlertCircle,
-  CheckCircle,
-  History
 } from 'lucide-react';
 import { motion, useAnimation } from 'framer-motion';
-import Countdown from 'react-countdown';
-import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import circle from '../assets/photos/icons/circle.png';
 import loupe from '../assets/photos/icons/loupe.png';
