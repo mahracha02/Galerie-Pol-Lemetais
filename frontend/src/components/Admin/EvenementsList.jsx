@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaImage, FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaCalendarAlt, FaMapMarkerAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
 import DeleteModal from '../layout/DeleteModal';
+import { APP_BASE_URL } from '../../hooks/config';
 
 const EvenementsList = ({ darkMode }) => {
   const [evenements, setEvenements] = useState([]);
@@ -84,7 +85,7 @@ const EvenementsList = ({ darkMode }) => {
   const fetchEvenements = async () => {
     try {
       // Assuming an admin-specific endpoint similar to other entities
-      const response = await fetch('/evenements/admin/api/');
+      const response = await fetch(`${APP_BASE_URL}/evenements/admin/api/`);
       if (!response.ok) throw new Error('Erreur lors de la récupération');
       const data = await response.json();
       setEvenements(data);
@@ -98,7 +99,7 @@ const EvenementsList = ({ darkMode }) => {
 
   const fetchArtistes = async () => {
     try {
-      const response = await fetch('/artistes/api');
+      const response = await fetch(`${APP_BASE_URL}/artistes/api`);
       if (!response.ok) throw new Error('Erreur lors de la récupération des artistes');
       const data = await response.json();
       setArtistes(data);
@@ -130,7 +131,7 @@ const EvenementsList = ({ darkMode }) => {
       setIsSubmitting(true);
       try {
         await Promise.all(deleteTarget.map(id =>
-          fetch(`/evenements/admin/api/${id}`, { method: 'DELETE' })
+          fetch(`${APP_BASE_URL}/evenements/admin/api/${id}`, { method: 'DELETE' })
         ));
         setEvenements(evenements.filter(event => !deleteTarget.includes(event.id)));
         setSelectedEvents([]);
@@ -147,7 +148,7 @@ const EvenementsList = ({ darkMode }) => {
     } else if (deleteTarget) {
       setIsSubmitting(true);
       try {
-        const response = await fetch(`/evenements/admin/api/${deleteTarget}`, { method: 'DELETE' });
+        const response = await fetch(`${APP_BASE_URL}/evenements/admin/api/${deleteTarget}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Erreur lors de la suppression');
         setEvenements(evenements.filter(event => event.id !== deleteTarget));
         setSelectedEvents(selectedEvents.filter(eventId => eventId !== deleteTarget));
@@ -175,7 +176,7 @@ const EvenementsList = ({ darkMode }) => {
 
   const handleTogglePublish = async (event) => {
     try {
-      const response = await fetch(`/evenements/admin/api/${event.id}`, {
+      const response = await fetch(`${APP_BASE_URL}/evenements/admin/api/${event.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -361,7 +362,7 @@ const EvenementsList = ({ darkMode }) => {
     };
 
     try {
-      const url = modalMode === 'add' ? '/evenements/admin/api/' : `/evenements/admin/api/${formData.id}`;
+      const url = modalMode === 'add' ? `${APP_BASE_URL}/evenements/admin/api/` : `${APP_BASE_URL}/evenements/admin/api/${formData.id}`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
 
       const response = await fetch(url, {

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaImage, FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaCalendarAlt, FaMapMarkerAlt, FaEye, FaEyeSlash } from 'react-icons/fa';
 import DeleteModal from '../layout/DeleteModal';
+import { APP_BASE_URL } from '../../hooks/config';
 
 const ExpositionsList = ({ darkMode }) => {
   const [expositions, setExpositions] = useState([]);
@@ -91,7 +92,7 @@ const ExpositionsList = ({ darkMode }) => {
 
   const fetchExpositions = async () => {
     try {
-      const response = await fetch('/expositions/admin/api/');
+      const response = await fetch(`${APP_BASE_URL}/expositions/admin/api/`);
       if (!response.ok) throw new Error('Erreur lors de la récupération');
       const data = await response.json();
       setExpositions(data);
@@ -105,7 +106,7 @@ const ExpositionsList = ({ darkMode }) => {
 
   const fetchArtistes = async () => {
     try {
-      const response = await fetch('/artistes/api');
+      const response = await fetch(`${APP_BASE_URL}/artistes/api`);
       if (!response.ok) throw new Error('Erreur lors de la récupération des artistes');
       const data = await response.json();
       setArtistes(data);
@@ -119,7 +120,7 @@ const ExpositionsList = ({ darkMode }) => {
 
   const fetchCatalogues = async () => {
     try {
-      const response = await fetch('/catalogues/admin/api');
+      const response = await fetch(`${APP_BASE_URL}/catalogues/admin/api`);
       if (!response.ok) throw new Error('Erreur lors de la récupération des catalogues');
       const data = await response.json();
       setCatalogues(data);
@@ -151,7 +152,7 @@ const ExpositionsList = ({ darkMode }) => {
       setIsSubmitting(true);
       try {
         await Promise.all(deleteTarget.map(id =>
-          fetch(`/expositions/api/${id}`, { method: 'DELETE' })
+          fetch(`${APP_BASE_URL}/expositions/api/${id}`, { method: 'DELETE' })
         ));
         setExpositions(expositions.filter(item => !deleteTarget.includes(item.id)));
         setSelectedExpos([]);
@@ -168,7 +169,7 @@ const ExpositionsList = ({ darkMode }) => {
     } else if (deleteTarget) {
       setIsSubmitting(true);
       try {
-        const response = await fetch(`/expositions/api/${deleteTarget}`, { method: 'DELETE' });
+        const response = await fetch(`${APP_BASE_URL}/expositions/api/${deleteTarget}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Erreur lors de la suppression');
         setExpositions(expositions.filter(item => item.id !== deleteTarget));
         setSelectedExpos(selectedExpos.filter(expoId => expoId !== deleteTarget));
@@ -196,7 +197,7 @@ const ExpositionsList = ({ darkMode }) => {
 
 const handleTogglePublish = async (expo) => {
     try {
-      const response = await fetch(`/expositions/admin/api/${expo.id}`, {
+      const response = await fetch(`${APP_BASE_URL}/expositions/admin/api/${expo.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -482,7 +483,7 @@ const handleTogglePublish = async (expo) => {
     };
 
     try {
-      const url = modalMode === 'add' ? '/expositions/admin/api/' : `/expositions/admin/api/${formData.id}`;
+      const url = modalMode === 'add' ? `${APP_BASE_URL}/expositions/admin/api/` : `${APP_BASE_URL}/expositions/admin/api/${formData.id}`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
 
       const response = await fetch(url, {

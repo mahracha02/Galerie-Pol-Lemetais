@@ -38,13 +38,13 @@ class Evenement
     private ?string $site_url = null;
 
     /**
-     * @var Collection<int, artiste>
+     * @var Collection<int, Artiste>
      */
-    #[ORM\ManyToMany(targetEntity: artiste::class, inversedBy: 'events')]
+    #[ORM\ManyToMany(targetEntity: Artiste::class, inversedBy: 'events')]
     private Collection $artists;
 
     #[ORM\ManyToOne(inversedBy: 'evenements')]
-    private ?artiste $artistePrincipal = null;
+    private ?Artiste $artistePrincipal = null;
 
     /**
      * @var Collection<int, Actualites>

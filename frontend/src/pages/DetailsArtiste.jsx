@@ -4,10 +4,23 @@ import { motion } from 'framer-motion';
 import circle from '../assets/photos/icons/circle.png';
 import photoDecorative from '../assets/photos/image_decorative_exposition_individuelles.png';
 import Medias from '../components/layout/Medias';
+import { APP_BASE_URL } from '../hooks/config'; 
 
 const DetailsArtiste = () => {
   const { id } = useParams();
-  const [artiste, setArtiste] = useState(null);
+  const [artiste, setArtiste] = useState({
+    id: null,
+    nom: '',
+    bio: '',
+    photo: '',
+    date_naissance: '',
+    date_deces: null,
+    pays: '',
+    medias: [],
+    exposition_principale: [],
+    expositions: [],
+    oeuvres: []
+  });
   const [loading, setLoading] = useState(true);
   const [showVirtualTour, setShowVirtualTour] = useState(false);
   const [selectedExpo, setSelectedExpo] = useState(null);
@@ -16,7 +29,7 @@ const DetailsArtiste = () => {
   // Fetch artist details
   const fetchArtistDetails = async (artistId) => {
     try {
-      const response = await fetch(`/artistes/api/${artistId}`);
+      const response = await fetch(`${APP_BASE_URL}/artistes/api/${artistId}`);
       if (!response.ok) throw new Error(`Erreur HTTP! Status: ${response.status}`);
       const data = await response.json();
       setArtiste(data);
@@ -82,8 +95,8 @@ const DetailsArtiste = () => {
     : expositions;
 
   // Debug logs
-  console.log('principalExpo:', principalExpo);
-  console.log('otherExpos:', otherExpos);
+  // console.log('principalExpo:', principalExpo);
+  // console.log('otherExpos:', otherExpos);
 
   if (loading) {
     return (
@@ -104,11 +117,11 @@ const DetailsArtiste = () => {
     );
   }
 
-  const oeuvresArray = Array.isArray(artiste.oeuvres)
-    ? artiste.oeuvres
-    : artiste.oeuvres
-      ? Object.values(artiste.oeuvres)
-      : [];
+  // Always use arrays for relations
+  const oeuvresArray = Array.isArray(artiste.oeuvres) ? artiste.oeuvres : [];
+  const expositionsArray = Array.isArray(artiste.expositions) ? artiste.expositions : [];
+  const principalExpoArray = Array.isArray(artiste.exposition_principale) ? artiste.exposition_principale : [];
+  const hasPrincipalExpo = principalExpoArray.length > 0 || (!!artiste.exposition_principale && typeof artiste.exposition_principale === 'object' && Object.keys(artiste.exposition_principale).length > 0);
   const displayedOeuvres = showAllOeuvres ? oeuvresArray : oeuvresArray.slice(0, 8);
   console.log('Displayed Oeuvres:', displayedOeuvres);
 
@@ -211,7 +224,7 @@ const DetailsArtiste = () => {
               Œuvres à découvrir
             </h2>
           </div>
-          {artiste.oeuvres.length === 0 ? (
+          {oeuvresArray.length === 0 ? (
             <div className="text-center text-lg text-gray-600 bg-gray-100 p-6 rounded-lg shadow-lg">
               <p>Aucune œuvre disponible pour cet artiste pour le moment.</p>
             </div>
@@ -245,7 +258,7 @@ const DetailsArtiste = () => {
                   );
                 })}
               </div>
-              {artiste.oeuvres.length > 8 && (
+              {oeuvresArray.length > 8 && (
                 <div className="flex justify-center mt-12">
                   <button
                     onClick={() => setShowAllOeuvres((v) => !v)}
@@ -361,7 +374,7 @@ const DetailsArtiste = () => {
           )}
 
           {/* Other Expositions */}
-          {otherExpos.length === 0 && principalExpo.length === 0 ? (
+          {otherExpos.length === 0 && !hasPrincipalExpo ? (
             <div className="text-center text-lg text-gray-600 bg-gray-100 p-6 rounded-lg shadow-lg">
               <p>Aucune exposition disponible pour cet artiste pour le moment.</p>
             </div>

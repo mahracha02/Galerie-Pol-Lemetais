@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Repository\ActualitesRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Exposition;
+use App\Entity\Evenement;
 
 #[ORM\Entity(repositoryClass: ActualitesRepository::class)]
 class Actualites
@@ -33,10 +35,10 @@ class Actualites
     private ?bool $nouveau = null;
 
     #[ORM\ManyToOne(inversedBy: 'actualites')]
-    private ?exposition $exposition = null;
+    private ?Exposition $exposition = null;
 
     #[ORM\ManyToOne(inversedBy: 'actualites')]
-    private ?evenement $evenement = null;
+    private ?Evenement $evenement = null;
 
     #[ORM\Column]
     private ?bool $published = null;
@@ -118,24 +120,24 @@ class Actualites
         return $this;
     }
 
-    public function getExposition(): ?exposition
+    public function getExposition(): ?Exposition
     {
         return $this->exposition;
     }
 
-    public function setExposition(?exposition $exposition): static
+    public function setExposition(?Exposition $exposition): static
     {
         $this->exposition = $exposition;
 
         return $this;
     }
 
-    public function getEvenement(): ?evenement
+    public function getEvenement(): ?Evenement
     {
         return $this->evenement;
     }
 
-    public function setEvenement(?evenement $evenement): static
+    public function setEvenement(?Evenement $evenement): static
     {
         $this->evenement = $evenement;
 

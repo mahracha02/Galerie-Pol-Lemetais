@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
 import circle from '../assets/photos/icons/circle.png';
 import Medias from '../components/layout/Medias';
+import { APP_BASE_URL } from '../hooks/config';
 
 const OeuvreDetails = () => {
   const { id } = useParams();
@@ -12,7 +13,7 @@ const OeuvreDetails = () => {
   const [zoomedImage, setZoomedImage] = useState(null);
 
   useEffect(() => {
-    fetch(`/oeuvres/api/${id}`)
+    fetch(`${APP_BASE_URL}/oeuvres/api/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setOeuvre(data);
@@ -24,7 +25,7 @@ const OeuvreDetails = () => {
   if (!oeuvre) return <div className="text-center mt-10 text-[#0C0C0C]">Chargement...</div>;
 
   // Gestion des images secondaires
-  const baseUrl = "http://127.0.0.1:8000/uploads/";
+  const baseUrl = `${APP_BASE_URL}/uploads/`;
   let secondaryImages = [];
   if (oeuvre.images_secondaires) {
     if (Array.isArray(oeuvre.images_secondaires)) {

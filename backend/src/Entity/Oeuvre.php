@@ -7,6 +7,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Exposition;
+use App\Entity\Evenement;
 
 #[ORM\Entity(repositoryClass: OeuvreRepository::class)]
 class Oeuvre
@@ -53,12 +55,12 @@ class Oeuvre
     private ?float $prix = null;
 
     #[ORM\ManyToOne(inversedBy: 'oeuvres')]
-    private ?exposition $exposition = null;
+    private ?Exposition $exposition = null;
 
     /**
-     * @var Collection<int, evenement>
+     * @var Collection<int, Evenement>
      */
-    #[ORM\ManyToMany(targetEntity: evenement::class, inversedBy: 'oeuvres')]
+    #[ORM\ManyToMany(targetEntity: Evenement::class, inversedBy: 'oeuvres')]
     private Collection $evenement;
 
     #[ORM\Column]
@@ -209,12 +211,12 @@ class Oeuvre
         return $this;
     }
 
-    public function getExposition(): ?exposition
+    public function getExposition(): ?Exposition
     {
         return $this->exposition;
     }
 
-    public function setExposition(?exposition $exposition): static
+    public function setExposition(?Exposition $exposition): static
     {
         $this->exposition = $exposition;
 
@@ -222,14 +224,14 @@ class Oeuvre
     }
 
     /**
-     * @return Collection<int, evenement>
+     * @return Collection<int, Evenement>
      */
     public function getEvenement(): Collection
     {
         return $this->evenement;
     }
 
-    public function addEvenement(evenement $evenement): static
+    public function addEvenement(Evenement $evenement): static
     {
         if (!$this->evenement->contains($evenement)) {
             $this->evenement->add($evenement);
@@ -238,7 +240,7 @@ class Oeuvre
         return $this;
     }
 
-    public function removeEvenement(evenement $evenement): static
+    public function removeEvenement(Evenement $evenement): static
     {
         $this->evenement->removeElement($evenement);
 

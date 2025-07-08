@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaNewspaper, FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaCalendarAlt, FaImage, FaEye, FaEyeSlash } from 'react-icons/fa';
 import DeleteModal from '../layout/DeleteModal';
+import { APP_BASE_URL } from '../../hooks/config';
 
 const ActualitesList = ({ darkMode }) => {
   // State management
@@ -41,7 +42,7 @@ const ActualitesList = ({ darkMode }) => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch('/actualites/admin/api');
+        const response = await fetch(`${APP_BASE_URL}/actualites/admin/api`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         setActualites(data);
@@ -147,8 +148,8 @@ const ActualitesList = ({ darkMode }) => {
     setIsSubmitting(true);
     try {
       const url = modalMode === 'add'
-        ? '/actualites/admin/api'
-        : `/actualites/admin/api/${formData.id}`;
+        ? `${APP_BASE_URL}/actualites/admin/api/`
+        : `${APP_BASE_URL}/actualites/admin/api/${formData.id}`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
       // Préparation des données de base
       const dataToSend = {
@@ -352,7 +353,7 @@ const ActualitesList = ({ darkMode }) => {
         throw new Error(responseData.error || responseData.details || 'Erreur lors de la sauvegarde');
       }
       // Rafraîchir la liste des actualités
-      const updatedResponse = await fetch('/actualites/admin/api');
+      const updatedResponse = await fetch(`${APP_BASE_URL}/actualites/admin/api`);
       if (!updatedResponse.ok) throw new Error('Erreur lors de la récupération des données');
       const updatedData = await updatedResponse.json();
       setActualites(updatedData);
@@ -377,7 +378,7 @@ const ActualitesList = ({ darkMode }) => {
   const handleDeleteConfirm = async () => {
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/actualites/admin/api/${deleteTarget}`, {
+      const response = await fetch(`${APP_BASE_URL}/actualites/admin/api/${deleteTarget}`, {
         method: 'DELETE'
       });
       if (!response.ok) {
@@ -410,7 +411,7 @@ const ActualitesList = ({ darkMode }) => {
     setIsSubmitting(true);
     try {
       await Promise.all(selectedNews.map(id =>
-        fetch(`/actualites/admin/api/${id}`, { method: 'DELETE' })
+        fetch(`${APP_BASE_URL}/actualites/admin/api/${id}`, { method: 'DELETE' })
       ));
       setActualites(actualites.filter(item => !selectedNews.includes(item.id)));
       setSelectedNews([]);
@@ -493,7 +494,7 @@ const ActualitesList = ({ darkMode }) => {
       item.id === actualite.id ? { ...item, published: updatedPublished } : item
     ));
     try {
-      const response = await fetch(`/actualites/admin/api/${actualite.id}`, {
+      const response = await fetch(`${APP_BASE_URL}/actualites/admin/api/${actualite.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

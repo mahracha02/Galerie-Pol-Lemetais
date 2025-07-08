@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaUser, FaEnvelope, FaUserShield, FaSearch, FaFilter, FaSort, FaEdit, FaTrash, FaPlus, FaArrowLeft, FaUserPlus, FaUserEdit, FaUserMinus, FaKey, FaCrown } from 'react-icons/fa';
 import DeleteModal from '../layout/DeleteModal';
+import { APP_BASE_URL } from '../../hooks/config';
 
 const UtilisateursList = ({ darkMode }) => {
   const [utilisateurs, setUtilisateurs] = useState([]);
@@ -59,7 +60,7 @@ const UtilisateursList = ({ darkMode }) => {
   useEffect(() => {
     const fetchUtilisateurs = async () => {
       try {
-        const response = await fetch('/admin/api/list');
+        const response = await fetch(`${APP_BASE_URL}/admin/api/list `);
         if (!response.ok) throw new Error('Erreur lors de la récupération');
         const data = await response.json();
         setUtilisateurs(data);
@@ -101,7 +102,7 @@ const UtilisateursList = ({ darkMode }) => {
     if (Array.isArray(deleteTarget)) {
       try {
         await Promise.all(deleteTarget.map(id =>
-          fetch(`/admin/api/delete/${id}`, { method: 'DELETE' })
+          fetch(`${APP_BASE_URL}/admin/api/delete/${id}`, { method: 'DELETE' })
         ));
         setUtilisateurs(utilisateurs.filter(user => !deleteTarget.includes(user.id)));
         setSelectedUsers([]);
@@ -117,7 +118,7 @@ const UtilisateursList = ({ darkMode }) => {
       }
     } else if (deleteTarget) {
       try {
-        const response = await fetch(`/admin/api/delete/${deleteTarget}`, { method: 'DELETE' });
+        const response = await fetch(`${APP_BASE_URL}/admin/api/delete/${deleteTarget}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Erreur lors de la suppression');
         setUtilisateurs(utilisateurs.filter(user => user.id !== deleteTarget));
         setSelectedUsers(selectedUsers.filter(userId => userId !== deleteTarget));
@@ -230,7 +231,7 @@ const UtilisateursList = ({ darkMode }) => {
       return;
     }
     try {
-      const url = modalMode === 'add' ? '/admin/api/create' : `/admin/api/update/${formData.id}`;
+      const url = modalMode === 'add' ? `${APP_BASE_URL}/admin/api/create` : `${APP_BASE_URL}/admin/api/update/${formData.id}`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
       const payload = { ...formData };
       if (modalMode === 'edit' && !formData.password) {

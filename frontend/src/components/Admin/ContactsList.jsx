@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaEnvelope, FaPhone, FaUser } from 'react-icons/fa';
 import DeleteModal from '../layout/DeleteModal';
+import { APP_BASE_URL } from '../../hooks/config';
 
 const ContactsList = ({ darkMode }) => {
   const [contacts, setContacts] = useState([]);
@@ -22,7 +23,7 @@ const ContactsList = ({ darkMode }) => {
   useEffect(() => {
     const fetchContacts = async () => {
       try {
-        const response = await fetch('/contacts/api/');
+        const response = await fetch(`${APP_BASE_URL}/contacts/api/`);
         if (!response.ok) throw new Error('Erreur lors de la récupération');
         const data = await response.json();
         setContacts(data);

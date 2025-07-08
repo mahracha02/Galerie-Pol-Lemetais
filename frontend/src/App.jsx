@@ -63,7 +63,7 @@ const App = () => {
   return (
     <>
     <AuthProvider>
-      <Router>
+      <Router basename="/test">
         <ScrollToTop />
         <Routes>
           {/* Admin routes: sidebar layout */}

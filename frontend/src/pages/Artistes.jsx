@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import circle from '../assets/photos/icons/circle.png';
 import loupe from '../assets/photos/icons/loupe.png';
 import { Link } from 'react-router-dom';
+import { APP_BASE_URL } from '../hooks/config';
 
 const Artistes = () => {
   const [artists, setArtists] = useState([]);
@@ -11,13 +12,14 @@ const Artistes = () => {
   const [search, setSearch] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('Tous');
   const [countries, setCountries] = useState([]);
+  
 
   useEffect(() => {
     // Fetch artists and countries from the API
     const fetchData = async () => {
       try {
-        const response = await fetch('/artistes/api');
-        
+        const response = await fetch(`${APP_BASE_URL}/artistes/api`);
+
         if (!response.ok) {
           throw new Error(`Erreur HTTP! Status: ${response.status}`);
         }

@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import circle from '../assets/photos/icons/circle.png';
 import calendar from '../assets/photos/icons/calendar.png';
 import Medias from '../components/layout/Medias';
+import { APP_BASE_URL } from '../hooks/config'; 
+
 
 const DetailsEvenement = () => {
   const { id } = useParams();
@@ -18,7 +20,7 @@ const DetailsEvenement = () => {
   // Fetch event details
   const fetchEventDetails = async (eventId) => {
     try {
-      const response = await fetch(`/evenements/api/${eventId}`);
+      const response = await fetch(`${APP_BASE_URL}/evenements/api/${eventId}`);
       if (!response.ok) throw new Error(`Erreur HTTP! Status: ${response.status}`);
       const data = await response.json();
       setEvenement(Array.isArray(data) ? data[0] : data); // handle array or object

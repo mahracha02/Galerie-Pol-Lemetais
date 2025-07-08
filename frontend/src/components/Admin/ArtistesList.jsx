@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaUser, FaImage, FaEye, FaEyeSlash } from 'react-icons/fa';
 import DeleteModal from '../layout/DeleteModal';
+import { APP_BASE_URL } from '../../hooks/config';
 
 const ArtistesList = ({ darkMode }) => {
   const [artistes, setArtistes] = useState([]);
@@ -63,7 +64,7 @@ const ArtistesList = ({ darkMode }) => {
   useEffect(() => {
     const fetchArtistes = async () => {
       try {
-        const response = await fetch('/artistes/admin/api/');
+        const response = await fetch(`${APP_BASE_URL}/artistes/admin/api/`);
         if (!response.ok) throw new Error('Erreur lors de la récupération');
         const data = await response.json();
         setArtistes(data);
@@ -92,7 +93,7 @@ const ArtistesList = ({ darkMode }) => {
     if (Array.isArray(deleteTarget)) {
       try {
         await Promise.all(deleteTarget.map(id =>
-          fetch(`/artistes/api/${id}`, { method: 'DELETE' })
+          fetch(`${APP_BASE_URL}/artistes/api/${id}`, { method: 'DELETE' })
         ));
         setArtistes(artistes.filter(artiste => !deleteTarget.includes(artiste.id)));
         setSelectedArtistes([]);
@@ -107,7 +108,7 @@ const ArtistesList = ({ darkMode }) => {
       }
     } else if (deleteTarget) {
       try {
-        const response = await fetch(`/artistes/api/${deleteTarget}`, { method: 'DELETE' });
+        const response = await fetch(`${APP_BASE_URL}/artistes/api/${deleteTarget}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Erreur lors de la suppression');
         setArtistes(artistes.filter(artiste => artiste.id !== deleteTarget));
         setSelectedArtistes(selectedArtistes.filter(artisteId => artisteId !== deleteTarget));
@@ -168,7 +169,7 @@ const ArtistesList = ({ darkMode }) => {
   // Toggle publish status
   const handleTogglePublish = async (artiste) => {
     try {
-      const response = await fetch(`/artistes/admin/api/${artiste.id}`, {
+      const response = await fetch(`${APP_BASE_URL}/artistes/admin/api/${artiste.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -299,7 +300,7 @@ const ArtistesList = ({ darkMode }) => {
 
     try {
       if (modalMode === 'edit') {
-        const response = await fetch(`/artistes/admin/api/${formData.id}`, {
+        const response = await fetch(`${APP_BASE_URL}/artistes/admin/api/${formData.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -312,7 +313,7 @@ const ArtistesList = ({ darkMode }) => {
           throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
         }
       } else {
-        const response = await fetch('/artistes/admin/api/', {
+        const response = await fetch(`${APP_BASE_URL}/artistes/admin/api/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -330,7 +331,7 @@ const ArtistesList = ({ darkMode }) => {
       setPreviewImage(null);
       
       // Refresh the artistes list
-      const updatedResponse = await fetch('/artistes/admin/api/');
+      const updatedResponse = await fetch(`${APP_BASE_URL}/artistes/admin/api/`);
       if (!updatedResponse.ok) throw new Error('Erreur lors de la récupération');
       const updatedData = await updatedResponse.json();
       setArtistes(updatedData);

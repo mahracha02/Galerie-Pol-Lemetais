@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import circle from '../assets/photos/icons/circle.png';
 import imgDecorative from '../assets/photos/image_decorative_exposition_individuelles.png';
 import Medias from '../components/layout/Medias';
+import { APP_BASE_URL } from '../hooks/config'; 
 const ExpoDetails = () => {
   const { id } = useParams();
   const [expo, setExpo] = useState(null);
@@ -16,7 +17,7 @@ const ExpoDetails = () => {
     const fetchExpo = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/expositions/api/${id}`);
+        const response = await fetch(`${APP_BASE_URL}/expositions/api/${id}`);
         if (!response.ok) throw new Error('Erreur de chargement');
         const data = await response.json();
         setExpo(data);

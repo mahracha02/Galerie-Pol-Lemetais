@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import loupe from '../assets/photos/icons/loupe.png';
 import calendar from '../assets/photos/icons/calendar.png';
 import circle from '../assets/photos/icons/circle.png';
+import { APP_BASE_URL } from '../hooks/config'; 
 
 const Expositions = () => {
   const [expositions, setExpositions] = useState([]);
@@ -16,11 +17,12 @@ const Expositions = () => {
   const [displayedYears, setDisplayedYears] = useState(2);
   const [showVirtualTour, setShowVirtualTour] = useState(false);
   const [selectedExpo, setSelectedExpo] = useState(null);
+  
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/expositions/api/published');
+        const response = await fetch(`${APP_BASE_URL}/expositions/api/published`);
         if (!response.ok) throw new Error('Erreur HTTP!');
         const data = await response.json();
         const sortedExpos = data.sort((a, b) => new Date(b.date_debut) - new Date(a.date_debut));

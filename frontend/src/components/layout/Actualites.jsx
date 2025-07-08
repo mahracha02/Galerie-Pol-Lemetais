@@ -1,4 +1,6 @@
+import React from 'react';
 import { useEffect, useState } from 'react';
+import { APP_BASE_URL } from '../../hooks/config';
 
 const Actualites = () => {
   const [actualites, setActualites] = useState([]);
@@ -9,7 +11,7 @@ const Actualites = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/actualites/api`);
+        const response = await fetch(`${APP_BASE_URL}/actualites/api`);
         if (!response.ok) throw new Error('Failed to fetch actualites');
         const data = await response.json();
         

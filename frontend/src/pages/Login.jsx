@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaUser, FaLock, FaEye, FaEyeSlash, FaPaintBrush } from 'react-icons/fa';
 import { useAuth } from '../contexts/useAuth';
+import { APP_BASE_URL } from '../hooks/config';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const Login = () => {
     setError('');
     setIsLoading(true);
     try {
-      const response = await fetch('/admin/api/login', {
+      const response = await fetch(`${APP_BASE_URL}/admin/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

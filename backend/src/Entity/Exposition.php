@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
+use App\Entity\Catalogue;
 
 
 #[ORM\Entity(repositoryClass: ExpositionRepository::class)]
@@ -56,9 +57,9 @@ class Exposition
     #[ORM\Column]
     private ?bool $published = null;
 
-    #[ORM\ManyToOne(inversedBy: 'expositions')]
+    #[ORM\ManyToOne(targetEntity: Catalogue::class, inversedBy: 'expositions')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?catalogue $catalogue = null;
+    private ?Catalogue $catalogue = null;
 
     /**
      * @var Collection<int, Medias>
@@ -242,15 +243,14 @@ class Exposition
         return $this;
     }
 
-    public function getCatalogue(): ?catalogue
+    public function getCatalogue(): ?Catalogue
     {
         return $this->catalogue;
     }
 
-    public function setCatalogue(?catalogue $catalogue): static
+    public function setCatalogue(?Catalogue $catalogue): static
     {
         $this->catalogue = $catalogue;
-
         return $this;
     }
 

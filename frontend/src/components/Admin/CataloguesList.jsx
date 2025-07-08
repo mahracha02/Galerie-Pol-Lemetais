@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaFilter, FaSort, FaTrash, FaPlus, FaEdit, FaImage, FaEye, FaEyeSlash, FaLink } from 'react-icons/fa';
 import DeleteModal from '../layout/DeleteModal';
+import { APP_BASE_URL } from '../../hooks/config';
 
 const CataloguesList = ({ darkMode }) => {
   const [catalogues, setCatalogues] = useState([]);
@@ -36,7 +37,7 @@ const CataloguesList = ({ darkMode }) => {
 
   const fetchCatalogues = async () => {
     try {
-      const response = await fetch('/catalogues/admin/api');
+      const response = await fetch(`${APP_BASE_URL}/catalogues/admin/api`);
       if (!response.ok) throw new Error('Erreur lors de la récupération');
       const data = await response.json();
       setCatalogues(data);
@@ -61,7 +62,7 @@ const CataloguesList = ({ darkMode }) => {
       setIsSubmitting(true);
       try {
         await Promise.all(deleteTarget.map(id =>
-          fetch(`/catalogues/admin/api/${id}`, { method: 'DELETE' })
+          fetch(`${APP_BASE_URL}/catalogues/admin/api/${id}`, { method: 'DELETE' })
         ));
         setCatalogues(catalogues.filter(catalogue => !deleteTarget.includes(catalogue.id)));
         setSelectedCatalogues([]);
@@ -78,7 +79,7 @@ const CataloguesList = ({ darkMode }) => {
     } else if (deleteTarget) {
       setIsSubmitting(true);
       try {
-        const response = await fetch(`/catalogues/admin/api/${deleteTarget}`, { method: 'DELETE' });
+        const response = await fetch(`${APP_BASE_URL}/catalogues/admin/api/${deleteTarget}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Erreur lors de la suppression');
         setCatalogues(catalogues.filter(catalogue => catalogue.id !== deleteTarget));
         setSelectedCatalogues(selectedCatalogues.filter(catalogueId => catalogueId !== deleteTarget));
@@ -106,7 +107,7 @@ const CataloguesList = ({ darkMode }) => {
 
   const handleTogglePublish = async (catalogue) => {
     try {
-      const response = await fetch(`/catalogues/admin/api/${catalogue.id}`, {
+      const response = await fetch(`${APP_BASE_URL}/catalogues/admin/api/${catalogue.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -234,7 +235,7 @@ const CataloguesList = ({ darkMode }) => {
       published: formData.published,
     };
     try {
-      const url = modalMode === 'add' ? '/catalogues/admin/api' : `/catalogues/admin/api/${formData.id}`;
+      const url = modalMode === 'add' ? `${APP_BASE_URL}/catalogues/admin/api/` : `${APP_BASE_URL}/catalogues/admin/api/${formData.id}`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
       const response = await fetch(url, {
         method,

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaImage, FaEye, FaEyeSlash, FaPalette } from 'react-icons/fa';
 import DeleteModal from '../layout/DeleteModal';
+import { APP_BASE_URL } from '../../hooks/config';
 
 const OeuvresList = ({ darkMode }) => {
   const [oeuvres, setOeuvres] = useState([]);
@@ -52,7 +53,7 @@ const OeuvresList = ({ darkMode }) => {
 
   const fetchOeuvres = async () => {
     try {
-      const response = await fetch('/oeuvres/admin/api/');
+      const response = await fetch(`${APP_BASE_URL}/oeuvres/admin/api/`);
       if (!response.ok) throw new Error('Erreur lors de la récupération');
       const data = await response.json();
       // Normalize images_secondaires to always be an array
@@ -75,7 +76,7 @@ const OeuvresList = ({ darkMode }) => {
 
   const fetchArtistes = async () => {
     try {
-      const response = await fetch('/artistes/admin/api');
+      const response = await fetch(`${APP_BASE_URL}/artistes/admin/api`);
       if (!response.ok) throw new Error('Erreur lors de la récupération des artistes');
       const data = await response.json();
       setArtistes(data);
@@ -87,7 +88,7 @@ const OeuvresList = ({ darkMode }) => {
 
   const fetchExpositions = async () => {
     try {
-      const response = await fetch('/expositions/admin/api');
+      const response = await fetch(`${APP_BASE_URL}/expositions/admin/api`);
       if (!response.ok) throw new Error('Erreur lors de la récupération des expositions');
       const data = await response.json();
       setExpositions(data);
@@ -99,7 +100,7 @@ const OeuvresList = ({ darkMode }) => {
 
   const fetchEvenements = async () => {
     try {
-      const response = await fetch('/evenements/admin/api');
+      const response = await fetch(`${APP_BASE_URL}/evenements/admin/api`);
       if (!response.ok) throw new Error('Erreur lors de la récupération des événements');
       const data = await response.json();
       setEvenements(data);
@@ -141,7 +142,7 @@ const OeuvresList = ({ darkMode }) => {
     } else if (deleteTarget) {
       setIsSubmitting(true);
       try {
-        const response = await fetch(`/oeuvres/api/${deleteTarget}`, { method: 'DELETE' });
+        const response = await fetch(`${APP_BASE_URL}/oeuvres/api/${deleteTarget}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Erreur lors de la suppression');
         setOeuvres(oeuvres.filter(oeuvre => oeuvre.id !== deleteTarget));
         setSelectedOeuvres(selectedOeuvres.filter(oeuvreId => oeuvreId !== deleteTarget));
@@ -169,7 +170,7 @@ const OeuvresList = ({ darkMode }) => {
 
   const handleTogglePublish = async (oeuvre) => {
     try {
-      const response = await fetch(`/oeuvres/admin/api/${oeuvre.id}`, {
+      const response = await fetch(`${APP_BASE_URL}/oeuvres/admin/api/${oeuvre.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -385,7 +386,7 @@ const OeuvresList = ({ darkMode }) => {
     };
 
     try {
-      const url = modalMode === 'add' ? '/oeuvres/admin/api' : `/oeuvres/admin/api/${formData.id}`;
+      const url = modalMode === 'add' ? `${APP_BASE_URL}/oeuvres/admin/api` : `${APP_BASE_URL}/oeuvres/admin/api/${formData.id}`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
 
       const response = await fetch(url, {

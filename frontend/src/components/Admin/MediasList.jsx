@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaFilter, FaSort, FaTrash, FaArrowLeft, FaPlus, FaEdit, FaImage, FaEye, FaEyeSlash, FaGripVertical, FaLink, FaExclamationTriangle } from 'react-icons/fa';
 import DeleteModal from '../layout/DeleteModal';
+import { APP_BASE_URL } from '../../hooks/config';
 
 const MediasList = ({ darkMode }) => {
   const [medias, setMedias] = useState([]);
@@ -47,7 +48,7 @@ const MediasList = ({ darkMode }) => {
 
   const fetchMedias = async () => {
     try {
-      const response = await fetch('/medias/admin/api');
+      const response = await fetch(`${APP_BASE_URL}/medias/admin/api`);
       if (!response.ok) throw new Error('Erreur lors de la récupération');
       const data = await response.json();
       setMedias(data);
@@ -61,7 +62,7 @@ const MediasList = ({ darkMode }) => {
 
   const fetchExpositions = async () => {
     try {
-      const response = await fetch('/expositions/admin/api');
+      const response = await fetch(`${APP_BASE_URL}/expositions/admin/api`);
       if (!response.ok) throw new Error('Erreur lors de la récupération des expositions');
       const data = await response.json();
       setExpositions(data);
@@ -73,7 +74,7 @@ const MediasList = ({ darkMode }) => {
 
   const fetchEvenements = async () => {
     try {
-      const response = await fetch('/evenements/admin/api');
+      const response = await fetch(`${APP_BASE_URL}/evenements/admin/api`);
       if (!response.ok) throw new Error('Erreur lors de la récupération des événements');
       const data = await response.json();
       setEvenements(data);
@@ -85,7 +86,7 @@ const MediasList = ({ darkMode }) => {
 
   const fetchArtistes = async () => {
     try {
-      const response = await fetch('/artistes/admin/api');
+      const response = await fetch(`${APP_BASE_URL}/artistes/admin/api`);
       if (!response.ok) throw new Error('Erreur lors de la récupération des artistes');
       const data = await response.json();
       setArtistes(data);
@@ -110,7 +111,7 @@ const MediasList = ({ darkMode }) => {
       setIsSubmitting(true);
       try {
         await Promise.all(deleteTarget.map(id =>
-          fetch(`/medias/admin/api/${id}`, { method: 'DELETE' })
+          fetch(`${APP_BASE_URL}/medias/admin/api/${id}`, { method: 'DELETE' })
         ));
         setMedias(medias.filter(media => !deleteTarget.includes(media.id)));
         setSelectedMedias([]);
@@ -127,7 +128,7 @@ const MediasList = ({ darkMode }) => {
     } else if (deleteTarget) {
       setIsSubmitting(true);
       try {
-        const response = await fetch(`/medias/admin/api/${deleteTarget}`, { method: 'DELETE' });
+        const response = await fetch(`${APP_BASE_URL}/medias/admin/api/${deleteTarget}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Erreur lors de la suppression');
         setMedias(medias.filter(media => media.id !== deleteTarget));
         setSelectedMedias(selectedMedias.filter(mediaId => mediaId !== deleteTarget));
@@ -155,7 +156,7 @@ const MediasList = ({ darkMode }) => {
 
   const handleTogglePublish = async (media) => {
     try {
-      const response = await fetch(`/medias/admin/api/${media.id}`, {
+      const response = await fetch(`${APP_BASE_URL}/medias/admin/api/${media.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -312,7 +313,7 @@ const MediasList = ({ darkMode }) => {
       published: formData.published,
     };
     try {
-      const url = modalMode === 'add' ? '/medias/admin/api' : `/medias/admin/api/${formData.id}`;
+      const url = modalMode === 'add' ? `${APP_BASE_URL}/medias/admin/api/` : `${APP_BASE_URL}/medias/admin/api/${formData.id}`;
       const method = modalMode === 'add' ? 'POST' : 'PUT';
       const response = await fetch(url, {
         method,

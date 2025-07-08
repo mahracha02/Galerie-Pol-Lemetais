@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import circle from '../assets/photos/icons/circle.png';
 import loupe from '../assets/photos/icons/loupe.png';
 import calendar from '../assets/photos/icons/calendar.png';
+import { APP_BASE_URL } from '../hooks/config'; 
 
 const Evenements = () => {
   const [evenements, setEvenements] = useState([]);
@@ -22,7 +23,7 @@ const Evenements = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/evenements/api/published');
+        const response = await fetch(`${APP_BASE_URL}/evenements/api/published`);
         if (!response.ok) {
           throw new Error(`Erreur HTTP! Status: ${response.status}`);
         }

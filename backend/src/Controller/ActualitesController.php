@@ -109,6 +109,7 @@ final class ActualitesController extends AbstractController{
     #[Route('/api', name: 'api_actualites_show', methods: ['GET'])]
     public function show(Request $request, ActualitesRepository $actualitesRepository): JsonResponse
     {
+        try {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 3);
         $offset = ($page - 1) * $limit;
@@ -140,6 +141,13 @@ final class ActualitesController extends AbstractController{
         }, $actualites);
 
         return $this->json($data);
+        } catch (\Throwable $e) {
+            return $this->json([
+                'error' => true,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ], 500);
+        }
     }
 
     #[Route('/api/admin', name: 'api_actualites_show_all', methods: ['GET'])]

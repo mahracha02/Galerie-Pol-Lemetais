@@ -23,13 +23,13 @@ class Medias
     private ?string $link_url = null;
 
     #[ORM\ManyToOne(inversedBy: 'medias')]
-    private ?exposition $exposition = null;
+    private ?Exposition $exposition = null;
 
     #[ORM\ManyToOne(inversedBy: 'medias')]
-    private ?evenement $evenement = null;
+    private ?Evenement $evenement = null;
 
     #[ORM\ManyToOne(inversedBy: 'medias')]
-    private ?artiste $artiste = null;
+    private ?Artiste $artiste = null;
 
     #[ORM\Column]
     private ?bool $published = null;
